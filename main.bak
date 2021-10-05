@@ -1,6 +1,6 @@
 #lang racket
-(require "TDA_USER.rkt")
-(require "TDA_DOCS.rkt")
+(require "tdauser.rkt")
+(require "tdadocs.rkt")
 
 ; Aca se ponen las funciones (register login)
 

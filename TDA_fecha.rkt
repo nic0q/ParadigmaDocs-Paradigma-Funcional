@@ -1,6 +1,8 @@
 #lang racket
 ;Implementación del TDA fecha
 (provide date)
+(provide date?)
+
 
 ;representacion
 ;(entero X entero X entero)
