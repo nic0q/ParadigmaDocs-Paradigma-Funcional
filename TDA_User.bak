@@ -1,0 +1,43 @@
+#lang racket
+(require "tdadocs.rkt")
+
+; Implementación TDA Usuario
+
+
+; Representación [name, password, connected]
+
+; Nivel 1 CONSTRUCTORES
+
+; REGISTER:
+; Descripción: Permite crear una cuenta mediante usuario, contraseña
+; El parametro cte sirve para almacenar los usuarios registrados
+; paradigmadocs X register X string X string
+
+(define (register cte date user pass)
+                  (list cte date user pass))
+
+; Nivel 2 registrado? true false
+
+; Nivel 3 Getters y Setters:
+
+; GET_USERNAME
+; Dominio: Lista y Entero positivo
+; Recorrido: String
+; Descripción: ; Funcion que retorna el username de el usuario 'n'
+; Representación/uso: (get_username cte n)
+; cte XX n°user XX
+; Recursión de cola
+
+(define (get_username lista n)
+  (if (= n 1)
+      (list-ref lista 2)
+  (get_username (list-ref lista 0) (- n 1))))
+
+(define (get_estado user) (car(cdr(cdr user)))) ;Imprime el estado
+
+; EJEMPLOS:
+
+(define gDocs1 (register (register (register "Empty_Docs" (date 05 10 2021) "US1" "PASS") (date 05 10 2021) "US2""PASS") (date 05 10 2021) "US3" "a"))
+(get_username gDocs1 3)
+(get_username gDocs1 2)
+(get_username gDocs1 1)

@@ -1,0 +1,11 @@
+#lang racket
+; TDA DOCS:
+
+(define (create_doc name autor)
+  (list name autor))
+
+; Asignar permisos sobre 1 documento
+
+(define (permiso_editar name_doc name_user)
+  (list name_doc name_user))
+

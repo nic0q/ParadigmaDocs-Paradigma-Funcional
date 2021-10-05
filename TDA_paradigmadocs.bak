@@ -1,0 +1,11 @@
+#lang racket
+; TDA Paradigma Docs
+(require "tdafecha")
+; CONSTRUCTOR
+; TDA DATE
+; TDA USER
+; Representacion (nombre_doc, date, encrypt, decrypt)
+; Constructor
+; Crear Documento (TDA Documento)
+; Crear Usuario (TDA Usuario)
+
