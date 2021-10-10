@@ -3,60 +3,75 @@
 (require "TDA_fecha.rkt")
 (require "TDA_paradigmadocs.rkt")
 
+(provide get_n_users)
+(provide get_password)
+(provide registrado_antes?)
+(provide logeado?)
+
 ; Implementación TDA Usuario
 
-; Nivel 1 CONSTRUCTORES
+; Nivel 1 CONSTRUCTORES:
 
-; REGISTER:
+; funcion login
+; funcion register
 
-; Descripción: Permite crear una cuenta mediante usuario, contraseña
-; Estructura: paradigmadocs X register X string X string
-; dom: espacio de trabajo, fecha, username, password
-; rec: lista con los datos
+; Nivel 2 PERTENENCIA:
 
-(define (register pDocs date user pass)
-        (list pDocs date user pass))
+; REGISTRADO_ANTES?: Función que retorna un tipo de dato booleano si el usuario se ha registrado previamente
 
-; LOGIN:
+(define (registrado_antes? f user)
+  (if (not(pair? f))
+      #f
+      (if (eq? (get_second f) user)
+          #t
+          (registrado_antes? (get_first f )user))))
 
-(define (login pDocs date user pass)
-  (define (register pDocs date user active)
-    (list pDocs date user active))
-  (register pDocs date user 1))
+; LOGEADO?: Función que retorna un tipo de dato booleano si el usuario se ha logeado previamente
 
-(define gDocs1 (login "Word" (date 5 10 2021) "US1" "PASS"))
-  
-; Nivel 2 registrado? true false
+(define (logeado? f user)
+  (if ( eq? (get_state f user ) 1)
+      #t
+      #f))
 
 ; Nivel 3 Getters y Setters:
 
-; GET_USERNAME
+; GET_USERNAME funcion encapsulada que obtiene el nombre de usuario por cada register hecho
 
-; Dominio: Lista y Entero positivo
-; Recorrido: String
-; Descripción: ; Funcion que retorna el username de el usuario 'n'
-; Representación/uso: (get_username cte n)
-; cte XX n°user XX
-; Recursión de cola
+(define (get_second f)
+  (cadr f))
 
-(define (get_username lista n)
-  (if (= n 1)
-      (list-ref lista 2)
-  (get_username (list-ref lista 0) (- n 1))))
+; GET_FIRST: funcion encapsulada que obtiene el complemento de cada usuario por cada register hecho
 
+(define (get_first f)
+  (car f))
 
-; EJEMPLOS:
+; GET SECOND: Segundo elemento de la lista
 
-(define emptyGDocs (paradigmadocs  "gDocs" (date 25 10 2021) "encrypt" "decrypt"))
-(define gDocs
-  (register
-   (register
-    (register emptyGDocs(date 05 10 2021) "US1" "PASS")
-     (date 05 10 2021) "US2""PASS")
-      (date 05 10 2021) "US3" "a"))
+(define (get_third f)
+  (caddr f))
 
-(get_username gDocs 3)
-(get_username gDocs 2)
-(get_username gDocs 1)
+; GET STATE: En caso que el usuario este logeado, retorna
 
-; CREATE LISTA
+(define (get_state f user)
+  (if (not(pair? f))
+      null
+      (if (eq? (get_second f) user)
+          (get_third f)
+          (get_state (first f )user))))
+
+; NUMBER_OF_USERS: Función que retorna el numero de usuario  registrados hasta el momento
+
+(define (get_n_users lista [n -1])
+    (if (not(pair? lista ))
+       n
+      (get_n_users (first lista)( + n 1))))
+
+; GET_PASSWORD: Función que retorna la contraseña de un usuario en la lista de los registrados
+
+(define (get_password f user)
+  (if (not(pair? f))
+      null
+      (if (eq? (get_second f) user)
+          (get_third f)
+          (get_password (first f )user))))
+
