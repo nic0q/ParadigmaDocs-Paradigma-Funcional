@@ -1,0 +1,19 @@
+#lang racket
+; TDA DOCS:
+
+; Constructor:
+
+; Pertenencia
+
+; ES_TITULO?
+
+; ES_CONTENIDO?
+
+; GET_DOCUMENTO: funcion que obtiene el contenido de documento creado por el usuario
+
+; GET_TITULO_DOCUMENTO: funcion que obtiene el titulo del documento creado por el usuario
+
+; 
+
+
+

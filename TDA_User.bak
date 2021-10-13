@@ -1,43 +1,97 @@
 #lang racket
-(require "tdadocs.rkt")
+(require "TDA_docs.rkt")
+(require "TDA_fecha.rkt")
+(require "TDA_paradigmadocs.rkt")
+(provide get_n_users)
+(provide get_password)
+(provide get_state)
+(provide registrado_antes?)
+(provide logeado?)
+(provide deslogin)
 
 ; Implementación TDA Usuario
 
+; Nivel 1 CONSTRUCTORES:
 
-; Representación [name, password, connected]
+; funcion login
+; funcion register
 
-; Nivel 1 CONSTRUCTORES
+; Nivel 2 PERTENENCIA:
 
-; REGISTER:
-; Descripción: Permite crear una cuenta mediante usuario, contraseña
-; El parametro cte sirve para almacenar los usuarios registrados
-; paradigmadocs X register X string X string
+; REGISTRADO_ANTES?: Función que retorna un tipo de dato booleano si el usuario se ha registrado previamente
 
-(define (register cte date user pass)
-                  (list cte date user pass))
+(define (registrado_antes? f user)
+  (if (not(pair? f))
+      #f
+      (if (eq? (get_second f) user)
+          #t
+          (registrado_antes? (get_first f )user))))
 
-; Nivel 2 registrado? true false
+; LOGEADO?: Función que retorna un tipo de dato booleano si el usuario se ha logeado previamente
+
+(define (logeado? f user)
+  (if ( eq? (get_state f user ) 1)
+      #t
+      #f))
 
 ; Nivel 3 Getters y Setters:
 
-; GET_USERNAME
-; Dominio: Lista y Entero positivo
-; Recorrido: String
-; Descripción: ; Funcion que retorna el username de el usuario 'n'
-; Representación/uso: (get_username cte n)
-; cte XX n°user XX
-; Recursión de cola
+; GET_USERNAME funcion encapsulada que obtiene el nombre de usuario por cada register hecho
 
-(define (get_username lista n)
-  (if (= n 1)
-      (list-ref lista 2)
-  (get_username (list-ref lista 0) (- n 1))))
+(define (get_second f)
+  (cadr f))
 
-(define (get_estado user) (car(cdr(cdr user)))) ;Imprime el estado
+; GET_FIRST: funcion encapsulada que obtiene el complemento de cada usuario por cada register hecho
 
-; EJEMPLOS:
+(define (get_first f)
+  (car f))
 
-(define gDocs1 (register (register (register "Empty_Docs" (date 05 10 2021) "US1" "PASS") (date 05 10 2021) "US2""PASS") (date 05 10 2021) "US3" "a"))
-(get_username gDocs1 3)
-(get_username gDocs1 2)
-(get_username gDocs1 1)
+; GET SECOND: Segundo elemento de la lista
+
+(define (get_third f)
+  (caddr f))
+
+(define (get_qr f)
+  (cadddr f))
+
+; GET STATE: En caso que el usuario este logeado, retorna el estado ( 0 - 1 ) deslogeado, logeado
+
+(define (get_state f user)
+  (if (not(pair? f))
+      null
+      (if (eq? (get_second f) user)
+          (get_qr f)
+          (get_state (first f )user))))
+
+; NUMBER_OF_USERS: Función que retorna el numero de usuario  registrados hasta el momento en paradigmadocs
+
+(define (get_n_users lista [n -1])
+    (if (not(pair? lista ))
+       n
+      (get_n_users (first lista)( + n 1))))
+
+; GET_PASSWORD: Función que retorna la contraseña de un usuario en paradigmadocs usuarios registrados
+; Dominio, paradigma docs, nombre de usuario (String)
+; Recorrido (String) contraseña del usuario
+(define (get_password f user)
+  (if (not(pair? f))
+      null
+      (if (eq? (get_second f) user)
+          (get_third f)
+          (get_password (first f )user))))
+
+
+; FUNCION DESLOGIN
+; Descripción: Funcion que deslogea a un usurio de paradigma docs; condiciones de deslogeo:
+; Contraseña correcta, este logeado (logeado?)
+; Representacion: paradigmaDocs XX user XX pass
+; Dominio: Archivo paradigmadocs donde estan los usuarios logeados
+; Recorrido: Archivo modificado de paradigmadocs con los usuarios deslogeados
+
+(define (deslogin pDocs user pass)
+    (if (and (logeado? pDocs user)(eq? pass (get_password pDocs user )) ) ; Si el usuario esta en paradigma docs
+        (list pDocs user pass 0)
+        pDocs))
+
+; Ejemplo
+;(define g_Docs7 (deslogin(deslogin(deslogin g_Docs4 "user1" "pass1") "user2""pass2")"user3""pass3"))
