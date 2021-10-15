@@ -1,1 +1,1 @@
-("8.2" ta6nt ("f42d33505dc8741e5fb33e56b8126fe93d62e010" . "0aec62037332ce8b0a91e0be3cfa8779c587905a") (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
+("8.2" ta6nt ("139c6af6501b830e0934e51ef0287485698b6322" . "9cc45924f3170d90ba66a2afd9cc693ee05078f2") #"C:\\Users\\n1c8l\\OneDrive - usach.cl\\Universidad\\Nivel 4\\Paradigmas\\Lab\\Laboratorio 1 Paradigmas\\TDA_User.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

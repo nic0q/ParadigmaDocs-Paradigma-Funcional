@@ -1,4 +1,8 @@
 #lang racket
+(require "TDA_User.rkt")
+(provide get_name_doc)
+(provide get_content_doc)
+
 ; TDA DOCS:
 
 ; Constructor:
@@ -9,9 +13,28 @@
 
 ; ES_CONTENIDO?
 
+; GET_CONTENIDO
+
+
+
 ; GET_DOCUMENTO: funcion que obtiene el contenido de documento creado por el usuario
 
 ; GET_TITULO_DOCUMENTO: funcion que obtiene el titulo del documento creado por el usuario
 
+; 
 
 
+(define (get_name_doc f user)
+  (if (not(pair? f))
+      null
+      (if (and (eq? (cadr f) user) (eq?(get_state f user)0))
+          (sixth f)
+          (get_name_doc (first f )user))))
+
+
+(define (get_content_doc f user)
+  (if (not(pair? f))
+      null
+      (if (and (eq? (cadr f) user) (eq?(get_state f user)0))
+          (last f)
+          (get_content_doc (first f )user))))
