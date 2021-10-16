@@ -1,10 +1,10 @@
 #lang racket
 (require "TDA_User.rkt")
-(require "TDA_doc.rkt")
+(require "TDA_Doc.rkt")
 (require "TDA_fecha.rkt")
 (require "TDA_paradigmadocs.rkt")
 
-(define p_docs (paradigmadocs  "gDocs" (date 25 10 2021) "encrypt" "decrypt"))
+(define p_docs (paradigmadocs  "gDocs" (date 25 10 2021) encryptFn decryptFn))
 
 ; FUNCIÓN REGISTER:
 
@@ -21,7 +21,7 @@
          (list pDocs user pass date)))
 
 ;----------------------------- EJEMPLOS --------------------------------------------------------------------------------------------------------------
-(define g_Docs1 (crear_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user2""pass2"(date 15 10 2021))"user3""pass3"(date 16 10 2021))))
+(define g_Docs1 (create_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user2""pass2"(date 16 10 2021))"user3""pass3"(date 17 10 2021))))
 ; Los 3 usuarios son unicos
 ;(define g_Docs2 (crear_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user1""pass2"(date 26 10 2021))"user3""pass3"(date 27 10 2021))))
 ; "user1" esta duplicado, por lo tanto, solo se mantiene la primera version registrada de "user1"
@@ -60,46 +60,54 @@
 ; Recorrido: Archivo actualizado de paradigmadocs con el documento creado por el usuario y su desconección de la sesión
 
 (define (create pDocs date nombre_doc content user) ; Si el usuario esta en paradigma docs
-
-      (add_doc(deslogear pDocs user)(list user date nombre_doc content (length(get_lista_documentos pDocs)))))
-      
-  
-;(add_doc (deslogear pDocs user)(list "share" id (registrado_for_share? pDocs accesses)))
+      (add_doc(deslogear pDocs user)(list user date nombre_doc content (length(get_lista_docs pDocs)))))
 
 ;----------------------------- EJEMPLOS -------------------------------------------------------------------------------------------------------------
-(define g_Docs2 ((login g_Docs1 "user1" "pass1" create) (date 30 08 2021) "doc0" "DOC 0 creado por user1"))
+(define g_Docs2 ((login g_Docs1 "user1" "pass1" create) (date 30 08 2021) "doc0" (encryptFn "DOC0 creado por user1")))
 ; El usuario existe, por lo tanto se crea el documento y retorna la version actualizada de paradigma_docs
-(define g_Docs3 ((login g_Docs2 "user1" "pass1" create) (date 30 09 2021) "doc1" "2DO DOC 1 creado por USER 1"))
+(define g_Docs3 ((login g_Docs2 "user1" "pass1" create) (date 30 09 2021) "doc1" (encryptFn "2DO DOC1 creado por USER 1")))
 ; El usuario no existe, por lo tanto no crea el documento y retorna la version no actualizada de paradigma_docs
-(define g_Docs4 ((login g_Docs3 "user2" "pass2" create) (date 31 08 2021) "doc2" "DOC 2 creado por user2"))
+(define g_Docs4 ((login g_Docs3 "user2" "pass2" create) (date 31 08 2021) "doc2" (encryptFn "DOC2 creado por user2")))
 ; El usuario existe pero tiene la contraseña incorrecta, por lo tanto no crea el documento y retorna la version no actualizada de paradigma_docs
 ;----------------------------------------------------------------------------------------------------------------------------------------------------
 
-g_Docs2
-g_Docs3
-g_Docs4
+;g_Docs2
+;g_Docs3
+;g_Docs4
 
 ; FUNCIÓN SHARE:
-; Descripción: Permite al usuario de paradigmadocs compartir un documento mediante su id con otros usuarios, otorgando permisos de lectura o escritura
+
+; Descripción: Permite al usuario (propietario de un documento) en paradigmadocs, compartir un documento mediante su id con otros usuarios, otorgando permisos de lectura o escritura
 ; Condiciones para su funcionamiento:
 ; 1) ¿El creador del documento es el mismo que desea compartir? -> Si, se ejecuta la funcion compartir; No, la funcion no se ejecuta
 ; 2) ¿Los usuarios con los que sea quiere compartir, estan registrados ? -> Si, se agrega a la lista de compartidos; No, no se agrega a la lista de compartidos
-; 3) ¿El usuario creo el  documento antes? -> Si, la funcion se ejecuta; No, la funcion no se ejecuta
+; 3) ¿El usuario creo el documento antes? -> Si, la funcion se ejecuta; No, la funcion no se ejecuta
+; 4) El usuario no puede compartir un documento consigo mismo
+; 5) Los permisos otorgados solo pueden ser (#\r / #\w / #\c)
+
 ; Representación: (paradigmadocs XX int XX access [string char])
 ; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
-; Recorrido: Archivo actualizado de paradigmadocs con el documento compartido con los usuarios
+; Recorrido: Archivo actualizado de paradigmadocs con los documentos compartidos por este, id y lista de usuarios con los que se comparte
 ; Tipo de Recursividad: Recursividad Natural
 
-(define (share pDocs id user accesses )
-  (if (not(eq? (third pDocs) null))
-      (add_doc (deslogear pDocs user)(list "share" id (registrado_for_share? pDocs accesses)))
+(define (share pDocs id user accesses)
+  (if (and (eq? user (get_creador_doc id (get_lista_docs pDocs))) (not(null?(get_lista_docs pDocs))) (not(null?(registrado_for_share? pDocs user accesses)))) ; Si no se ha creado ningun documento -> Retorna paradigma_docs, con el usuario deslogeado
+      (deslogear (add_by_id id pDocs (list user id (registrado_for_share? pDocs user accesses)))user)
       (deslogear pDocs user)))
-; (if (eq?(creador_doc pDocs) user) (deslogear pDocs user)
+
+; Funcion que retorna el creador de un documento mediante su id
 
 ;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------------------------
-(define g_Docs5 ((login g_Docs4 "user1" "pass1" share) 0 (access "user1" #\r )(access "user2" #\r)(access "user3" #\r)))
-(define g_Docs6 ((login g_Docs5 "user2" "pass2" share) 0 (access "user5" #\r )(access "user1" #\r)(access "user2" #\r)))
-(define g_Docs7 ((login g_Docs6 "user3" "pass3" share) 0 (access "user1" #\r )(access "user5" #\r)(access "user5" #\r)(access "user4" #\r)(access "user5" #\r)))
+(define g_Docs5 ((login g_Docs4 "user2" "pass2" share) 2 (access "user1" #\w )(access "user2" #\w)(access "user3" #\r)))
+(define g_Docs6 ((login g_Docs5 "user1" "pass1" share) 0 (access "user2" #\u )(access "user3" #\w)(access "user3" #\w)))
+(define g_Docs7 ((login g_Docs6 "user1" "pass1" share) 0 (access "user2" #\u )(access "user3" #\w)(access "user2" #\r)(access "user2" #\r)(access "user5" #\c)))
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
-; funcion que retorna true si la operacion hecha es "create"
 
+g_Docs5
+;g_Docs6
+;g_Docs7
+
+
+; FUNCIÓN ADD:
+; Concatenar texto
+; Añadir versiones de documentos
