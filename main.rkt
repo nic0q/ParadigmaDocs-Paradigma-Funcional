@@ -42,11 +42,14 @@
     (if (and (registrado_antes? pDocs user)(eq? pass (get_password (get_lista_registrados pDocs) user))) ; Si el usuario esta (registrado) en paradigma docs y tiene la contraseña correcta
         (cond
           [(eq? f create) (lambda(date name content) (f (logear pDocs user pass)date name content user))]
-          [(eq? f share) (lambda(idDoc access . accesses) (f (logear pDocs user pass) idDoc user (cons access accesses)))])
+          [(eq? f share) (lambda(idDoc access . accesses) (f (logear pDocs user pass) idDoc user (cons access accesses)))]
+          [(eq? f add) (lambda(idDoc date content) (f idDoc date content))]
+          )
         ;else
         (cond
           [(eq? f create)(lambda(date name content)pDocs)]
-          [(eq? f share) (lambda(idDoc access . accesses)pDocs)]))) ;Se crea una version de cond en 'else' para manejar los 6 parametros que retorna paradigmadocs sin modificaciones
+          [(eq? f share) (lambda(idDoc access . accesses)pDocs)]
+          [(eq? f add) (lambda(idDoc date content) pDocs)]))) ;Se crea una version de cond en 'else' para manejar los 6 parametros que retorna paradigmadocs sin modificaciones
 
 ;----------------------------- EJEMPLOS ---------------------------------------------------------------------
 ; Los ejemplos de login vienen incluidos en cada función posterior, ya que create no funcion sin operation
@@ -60,7 +63,7 @@
 ; Recorrido: Archivo actualizado de paradigmadocs con el documento creado por el usuario y su desconección de la sesión
 
 (define (create pDocs date nombre_doc content user) ; Si el usuario esta en paradigma docs
-      (add_doc(deslogear pDocs user)(list user date nombre_doc content (length(get_lista_docs pDocs)))))
+      (add_doc(deslogear pDocs user) (list user nombre_doc (list(list date content 0))(length(get_lista_docs pDocs)))))
 
 ;----------------------------- EJEMPLOS -------------------------------------------------------------------------------------------------------------
 (define g_Docs2 ((login g_Docs1 "user1" "pass1" create) (date 30 08 2021) "doc0" (encryptFn "DOC0 creado por user1")))
@@ -84,30 +87,63 @@
 ; 3) ¿El usuario creo el documento antes? -> Si, la funcion se ejecuta; No, la funcion no se ejecuta
 ; 4) El usuario no puede compartir un documento consigo mismo
 ; 5) Los permisos otorgados solo pueden ser (#\r / #\w / #\c)
+; 6) El usuario puede quitar y colocar distintos permisos, el ultimo dado a tal usuario es el activo
 
 ; Representación: (paradigmadocs XX int XX access [string char])
 ; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
 ; Recorrido: Archivo actualizado de paradigmadocs con los documentos compartidos por este, id y lista de usuarios con los que se comparte
 ; Tipo de Recursividad: Recursividad Natural
 
+(define (tiene_shares? lista)
+  (if (empty? lista)
+      #f
+      (if (eq? (car(car lista))"s")
+          #t
+          (tiene_shares? (cdr lista)))))
+
+(define (crear_permisos pdocs id x)
+  (append (filtrar_ids id (get_lista_docs pdocs))(list(remove(filtrar_shares (filter list? (get_doc_byid id (get_lista_docs pdocs))))(append(get_doc_byid id (get_lista_docs pdocs))(list x))))))
+
+(define(filtrar_shares lista)
+  (if (empty? lista)
+      null
+  (if (eq? (car(car lista))"s")
+           (car lista)
+           (filtrar_shares (cdr lista)))))
+
 (define (share pDocs id user accesses)
   (if (and (eq? user (get_creador_doc id (get_lista_docs pDocs))) (not(null?(get_lista_docs pDocs))) (not(null?(registrado_for_share? pDocs user accesses)))) ; Si no se ha creado ningun documento -> Retorna paradigma_docs, con el usuario deslogeado
-      (deslogear (add_by_id id pDocs (list user id (registrado_for_share? pDocs user accesses)))user)
+      (if (tiene_shares?(filter list? (get_doc_byid id (get_lista_docs pDocs))))
+          (deslogear(crear_pdocs_docs pDocs (crear_permisos pDocs id (cons "s" (mix (usuarios_share (filter list? (get_doc_byid id (get_lista_docs pDocs))))(ultimo_permiso (registrado_for_share? pDocs user accesses) '())))))user)
+          (deslogear (add_by_id id pDocs (cons  "s"  (ultimo_permiso (registrado_for_share? pDocs user accesses) '())))user))
       (deslogear pDocs user)))
 
 ; Funcion que retorna el creador de un documento mediante su id
 
 ;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------------------------
-(define g_Docs5 ((login g_Docs4 "user2" "pass2" share) 2 (access "user1" #\w )(access "user2" #\w)(access "user3" #\r)))
-(define g_Docs6 ((login g_Docs5 "user1" "pass1" share) 0 (access "user2" #\u )(access "user3" #\w)(access "user3" #\w)))
-(define g_Docs7 ((login g_Docs6 "user1" "pass1" share) 0 (access "user2" #\u )(access "user3" #\w)(access "user2" #\r)(access "user2" #\r)(access "user5" #\c)))
+(define g_Docs5 ((login g_Docs4 "user1" "pass1" share) 0 (access "user1" #\r )(access "user2" #\c)(access "user1" #\c) (access "user1" #\c)))
+(define g_Docs6 ((login g_Docs5 "user1" "pass1" share) 0 (access "user1" #\w )(access "user2" #\c)(access "user1" #\w)))
+(define g_Docs7 ((login g_Docs6 "user2" "pass2" share) 2 (access "user1" #\r )(access "user1" #\w)(access "user2" #\c)(access "user3" #\c)(access "user5" #\c)))
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;(ultimo_permiso (sequiere_ingresar) (usuarios_share (get_listas (get_document_byid 0 (get_lista_docs g_Docs6)))))
 
 g_Docs5
-;g_Docs6
-;g_Docs7
-
+g_Docs6
+g_Docs7
 
 ; FUNCIÓN ADD:
+; Funcion que añade texto al final de la ultima versión
 ; Concatenar texto
 ; Añadir versiones de documentos
+
+(define(add pdocs id date text)
+  (append (get_inactive_vers_byid id pdocs) (list (get_date_active_vr id pdocs) (string-join (list(cadr(get_active_vr_byid id pdocs)) (encryptFn text)) ) (get_id_active_vr id pdocs))))
+
+(get_doc_byid 2 (get_lista_docs g_Docs7))
+(get_doc_byid 1 (get_lista_docs g_Docs7))
+(get_doc_byid 0 (get_lista_docs g_Docs7))
+
+
+; EJEMPLO
+(add g_Docs7 0 (date 17 10 2021) "O D A N E T A C N O C")
+; Pendiente por hacer, agregar la version con el texto actualizado a paradigmadocs

@@ -2,12 +2,14 @@
 ; TDA Paradigma Docs
 (require "TDA_fecha.rkt")
 (provide paradigmadocs)
-(provide create_listas)
-(provide access)
-(provide get_lista_logeados)
-(provide get_lista_registrados)
 (provide encryptFn)
 (provide decryptFn)
+(provide get_lista_logeados)
+(provide get_lista_registrados)
+(provide get_lista_docs)
+(provide create_listas)
+(provide access)
+(provide crear_pdocs_docs)
 
 ; REPRESENTACIÓN:
 
@@ -41,7 +43,11 @@
 
 (define (paradigmadocs name date encrypt decrypt)
   (list name date encrypt decrypt))
+; CREAR_PARADIGMADOCS:
 
+(define (crear_pdocs_docs pDocs x)
+  (list (get_lista_registrados pDocs) (get_lista_logeados pDocs) x)
+  )
 ; PERTENENCIA:
 
 ; Descripción: Verifica si el nombre es de tipo string, true, false

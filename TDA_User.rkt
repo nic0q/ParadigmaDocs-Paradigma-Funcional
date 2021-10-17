@@ -3,9 +3,10 @@
 (require "TDA_paradigmadocs.rkt")
 (provide get_password)
 (provide registrado_antes?)
+(provide registrado_for_share?)
 (provide logear)
 (provide deslogear)
-(provide registrado_for_share?)
+
 
 ; Implementación TDA Usuario
 
@@ -56,15 +57,6 @@
           (third f)
           (get_password (first f )user))))
 
-; GET_NUMBER_OF_USERS: Función que retorna el numero de usuario  registrados hasta el momento en paradigmadocs
-; Dominio: lista
-; Recorrido: int
-
-(define (get_n_users lista [n -1])
-    (if (not(pair? lista ))
-       n
-      (get_n_users (first lista)( + n 1))))
-
 ; MODIFICADORES:
 
 ; LOGEAR: Funcion que añade al usuario a la lista de activos cuando se usa la funcion login
@@ -72,7 +64,7 @@
 ; Recorrido: paradigmadocs (lista)
 
 (define (logear f user pass)
-  (if(eq? pass (get_password f user))
+  (if(and(eq? pass (get_password f user))(not(logeado? f user))) ; Para que pueda logearse verifica si la contraseña es correcta y no esta en la lista de logeados
      (list (first f) (append (list user)(second f))(third f))
      f))
 
@@ -83,5 +75,6 @@
 (define (deslogear f user)
   (list (first f) (append (remove user (get_lista_logeados f)))(third f)))
 
+; GET_LISTA_COMPARTIDOS
 
 

@@ -1,10 +1,10 @@
 #lang racket
 (require "TDA_User.rkt")
-(require "TDA_Docs.rkt")
+(require "TDA_Doc.rkt")
 (require "TDA_fecha.rkt")
 (require "TDA_paradigmadocs.rkt")
 
-(define p_docs (paradigmadocs  "gDocs" (date 25 10 2021) "encrypt" "decrypt"))
+(define p_docs (paradigmadocs  "gDocs" (date 25 10 2021) encryptFn decryptFn))
 
 ; FUNCIÓN REGISTER:
 
@@ -15,51 +15,157 @@
 ; contraseña del registro, siendo el username un identificador único, en caso existan duplicados, permite solo 1 con ese username
 ; Tipo de recursión: Recursión Natural
 
-(define (register pDocs user pass date  )
+(define (register pDocs user pass date)
       (if (registrado_antes? pDocs user)   ; Si el usuario esta registrado, entonces no crear la lista, solamente llamar a la función pDocs
           pDocs
-         (list  pDocs user pass date )))
+         (list pDocs user pass date)))
 
-;----------------------------- EJEMPLOS ----------------------------------------------------------------------------------------------------
-
-(define g_Docs1 (register(register(register p_docs "user1" "pass1"(date 15 10 2021))"user2""pass2"(date 15 10 2021))"user3""pass3"(date 16 10 2021)))
-(define g_Docs2 (register(register(register p_docs "user1" "pass1"(date 15 10 2021))"user1""pass2"(date 26 10 2021))"user3""pass3"(date 27 10 2021)))
-(define g_Docs3 (register(register(register p_docs "user1" "pass1"(date 15 10 2021))"user1""pass2"(date 29 10 2021))"user1""pass3"(date 30 10 2021)))
+;----------------------------- EJEMPLOS --------------------------------------------------------------------------------------------------------------
+(define g_Docs1 (create_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user2""pass2"(date 16 10 2021))"user3""pass3"(date 17 10 2021))))
+; Los 3 usuarios son unicos
+;(define g_Docs2 (crear_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user1""pass2"(date 26 10 2021))"user3""pass3"(date 27 10 2021))))
+; "user1" esta duplicado, por lo tanto, solo se mantiene la primera version registrada de "user1"
+;(define g_Docs3 (crear_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user1""pass2"(date 29 10 2021))"user1""pass3"(date 30 10 2021))))
+; "user1" esta triplicado, por lo tanto, solo se mantiene la primera version registrada de "user1"
+;-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 ; FUNCIÓN LOGIN:
 
 ; Dominio: Archivo de tipo paradigma_docs donde se encuentran los usuarios registrados
 ; Recorrido: Versión actualizada de paradigma docs, con los usuarios logeados o autenticados
 ; Representación: (paradigmadocs X string X string X function)
-; Funcion que si el usuario existe, (previamente registrado en paradigma_docs), la constraseña que ingresa es igual a la registrada, si esto se cumple se
-; una version actualizada de paradigma docs, con el usuario logeado (autenticado) añadido a la version anterior de paradigma docs con un parametro nuevo
-; "state" con un 1 ahora registrado
-; Tipo de Recursión: Recursión Natural
+; Descripción:Funcion que si el usuario existe, (previamente registrado en paradigma_docs), la constraseña que ingresa es igual a la registrada, si esto se cumple se
+; retorna una version actualizada de paradigma docs evaluada en operation y el usuario pasa a desconectado o deslogeado
+; Tipo de Recursión: Recursión Natural en la función (registrado_antes?)
 
 (define (login pDocs user pass f)
-    (if (and (registrado_antes? pDocs user) (eq? pass (get_password pDocs user ))) ; Si el usuario esta en paradigma docs
-        (list pDocs user 1 pass f)
-        pDocs))
-         ;Aca esta creando una nueva lista y la mete en paradigma_docs, debo crear algo que meta el 1 como autenticado
+    (if (and (registrado_antes? pDocs user)(eq? pass (get_password (get_lista_registrados pDocs) user))) ; Si el usuario esta (registrado) en paradigma docs y tiene la contraseña correcta
+        (cond
+          [(eq? f create) (lambda(date name content) (f (logear pDocs user pass)date name content user))]
+          [(eq? f share) (lambda(idDoc access . accesses) (f (logear pDocs user pass) idDoc user (cons access accesses)))])
+        ;else
+        (cond
+          [(eq? f create)(lambda(date name content)pDocs)]
+          [(eq? f share) (lambda(idDoc access . accesses)pDocs)]))) ;Se crea una version de cond en 'else' para manejar los 6 parametros que retorna paradigmadocs sin modificaciones
 
-(define(f) null) ; Funcion de ejemplo, no hace nada
-
-;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------
-; Ejemplo 1: Aqui los 3 existen y tienen la contraseña correcta
-(define g_Docs4 (login(login(login g_Docs1 "user1" "pass1" f)"user2" "pass2" f)"user3" "pass3" f))
-
-; Ejemplo 2: Aqui los 2 existen y solo 1 tiene la contraseña correcta
-(define g_Docs5 (login(login g_Docs2 "user1" "pass1" f)"user3" "incorrecta" f))
-
-; Ejemplo 3: Aqui existe y primero se intento logear con una contraseña incorrecta y al último si dio la clave correcta
-(define g_Docs6 (login(login g_Docs3 "user1" "incorrecta" f)"user1" "pass1" f))
-
-; Comprobacion mediante el verificador logeado? que retorna #t si se logeo correctamente
-
-(logeado?  g_Docs4 "user1")  ; -> #t
-(logeado?  g_Docs5 "user3")  ; -> #f
-(logeado?  g_Docs6 "user1")  ; -> #t
-
-;---------------------------------------------------------------------
+;----------------------------- EJEMPLOS ---------------------------------------------------------------------
+; Los ejemplos de login vienen incluidos en cada función posterior, ya que create no funcion sin operation
+;------------------------------------------------------------------------------------------------------------
 
 ; FUNCIÓN CREATE:
+
+; Descripción: Permite al usuario de paradigmadocs crear un documento en una fecha determinada, un nombre y su contenido
+; Representación: (paradigmadocs X string X string X function)
+; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
+; Recorrido: Archivo actualizado de paradigmadocs con el documento creado por el usuario y su desconección de la sesión
+
+(define (create pDocs date nombre_doc content user) ; Si el usuario esta en paradigma docs
+      (add_doc(deslogear pDocs user)(list user nombre_doc (list date content 0)(length(get_lista_docs pDocs)))))
+
+;----------------------------- EJEMPLOS -------------------------------------------------------------------------------------------------------------
+(define g_Docs2 ((login g_Docs1 "user1" "pass1" create) (date 30 08 2021) "doc0" (encryptFn "DOC0 creado por user1")))
+; El usuario existe, por lo tanto se crea el documento y retorna la version actualizada de paradigma_docs
+(define g_Docs3 ((login g_Docs2 "user1" "pass1" create) (date 30 09 2021) "doc1" (encryptFn "2DO DOC1 creado por USER 1")))
+; El usuario no existe, por lo tanto no crea el documento y retorna la version no actualizada de paradigma_docs
+(define g_Docs4 ((login g_Docs3 "user2" "pass2" create) (date 31 08 2021) "doc2" (encryptFn "DOC2 creado por user2")))
+; El usuario existe pero tiene la contraseña incorrecta, por lo tanto no crea el documento y retorna la version no actualizada de paradigma_docs
+;----------------------------------------------------------------------------------------------------------------------------------------------------
+
+;g_Docs2
+;g_Docs3
+;g_Docs4
+
+; FUNCIÓN SHARE:
+
+; Descripción: Permite al usuario (propietario de un documento) en paradigmadocs, compartir un documento mediante su id con otros usuarios, otorgando permisos de lectura o escritura
+; Condiciones para su funcionamiento:
+; 1) ¿El creador del documento es el mismo que desea compartir? -> Si, se ejecuta la funcion compartir; No, la funcion no se ejecuta
+; 2) ¿Los usuarios con los que sea quiere compartir, estan registrados ? -> Si, se agrega a la lista de compartidos; No, no se agrega a la lista de compartidos
+; 3) ¿El usuario creo el documento antes? -> Si, la funcion se ejecuta; No, la funcion no se ejecuta
+; 4) El usuario no puede compartir un documento consigo mismo
+; 5) Los permisos otorgados solo pueden ser (#\r / #\w / #\c)
+; 6) El usuario puede quitar y colocar distintos permisos, el ultimo dado a tal usuario es el activo
+
+; Representación: (paradigmadocs XX int XX access [string char])
+; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
+; Recorrido: Archivo actualizado de paradigmadocs con los documentos compartidos por este, id y lista de usuarios con los que se comparte
+; Tipo de Recursividad: Recursividad Natural
+(define (tiene_shares? lista)
+  (if (empty? lista)
+      #f
+      (if (eq? (car(car lista))"s")
+          #t
+          (tiene_shares? (cdr lista)))))
+
+
+(define (usuarios_share documento)
+  (if (empty? documento)
+      null
+      (if(eq?(car(car documento))"s")
+         (cdr(car documento))
+         (usuarios_share (cdr documento)))))
+(define (filtrar_ids id lista)
+  (if (empty? lista)
+      null
+      (if (not(eq? id (get_id (car lista))))
+      (cons (car lista)(filtrar_ids id (cdr lista)))
+      (filtrar_ids id (cdr lista)))))    
+
+
+(define(filtrar_shares lista)
+  (if (empty? lista)
+      null
+  (if (eq? (car(car lista))"s")
+           (car lista)
+           (filtrar_shares (cdr lista)))))
+          
+(define (nueva_lista pdocs id x) (append (filtrar_ids id (get_lista_docs pdocs)) (list(remove(filtrar_shares (filter list? (get_document_byid id (get_lista_docs pdocs))))(append(get_document_byid id (get_lista_docs pdocs))(list x))))))
+
+(define (lista_usuarios_compartidos lista)
+  (if (empty? lista)
+      null
+      (cons (car (car lista )) (lista_usuarios_compartidos (cdr lista))))
+      )
+(define (mix lista_arrastre lista_actual)
+  (if (empty? lista_arrastre)
+      lista_actual
+      (if (not(list?(member (car(car lista_arrastre)) (lista_usuarios_compartidos lista_actual))))
+          (mix (cdr lista_arrastre) (append (list(car lista_arrastre))lista_actual))
+          (mix (cdr lista_arrastre) lista_actual))))
+
+; lista arrastre: ; lista actual: 
+;(append '(("user3" (#\w))) (car '(("user2" (#\c)))))
+
+(define (share pDocs id user accesses)
+  (if (and (eq? user (get_creador_doc id (get_lista_docs pDocs))) (not(null?(get_lista_docs pDocs))) (not(null?(registrado_for_share? pDocs user accesses)))) ; Si no se ha creado ningun documento -> Retorna paradigma_docs, con el usuario deslogeado
+      (if (tiene_shares?(filter list? (get_document_byid id (get_lista_docs pDocs))))
+          (nueva_lista pDocs id (cons "TEST" (mix (usuarios_share (filter list? (get_document_byid id (get_lista_docs pDocs))))(ultimo_permiso (registrado_for_share? pDocs user accesses) '()))))
+           ;(usuarios_share (filter list? (get_document_byid id (get_lista_docs pDocs)))) ; usuarios de arrastre
+           ;(ultimo_permiso (registrado_for_share? pDocs user accesses) '()) ; usuarios actuales
+          (deslogear (add_by_id id pDocs (cons  "s"  (ultimo_permiso (registrado_for_share? pDocs user accesses) '())))user))
+      (deslogear pDocs user)))
+
+; Funcion que retorna el creador de un documento mediante su id
+
+;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------------------------
+(define g_Docs5 ((login g_Docs4 "user1" "pass1" share) 0 (access "user1" #\r )(access "user2" #\c)(access "user3" #\c) (access "user1" #\c)))
+(define g_Docs6 ((login g_Docs5 "user1" "pass1" share) 0 (access "user2" #\w )(access "user3" #\c)(access "user3" #\w)))
+;(define g_Docs7 ((login g_Docs6 "user1" "pass1" share) 0 (access "user1" #\r )(access "user1" #\r)(access "user2" #\c)(access "user3" #\c)(access "user5" #\c)))
+;------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;(ultimo_permiso (sequiere_ingresar) (usuarios_share (get_listas (get_document_byid 0 (get_lista_docs g_Docs6)))))
+
+;g_Docs5
+;g_Docs6
+;g_Docs7
+; Pendiente: IDEAS de hoy a las 3 a.m, usar la funcion antigua y hacer un condicional de s "share" you know what I mean
+; FUNCIÓN ADD:
+; Concatenar texto
+; Añadir versiones de documentos
+
+g_Docs6
+
+; Entonces si existe una operacion share, compara las usuarios con los que se ha compartido, antes de agregarlos
+; en vez de la operacion add_by_id, add_shares
+
+
+; Funcion que me devuelve una lista de los documentos que tienen id distinto que el que paso
