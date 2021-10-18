@@ -1,12 +1,7 @@
 #lang racket
 (require "TDA_fecha.rkt")
 (require "TDA_paradigmadocs.rkt")
-(provide get_password)
-(provide registrado_antes?)
-(provide registrado_for_share?)
-(provide logear)
-(provide deslogear)
-
+(provide (all-defined-out))
 
 ; Implementación TDA Usuario
 
@@ -74,7 +69,3 @@
 
 (define (deslogear f user)
   (list (first f) (append (remove user (get_lista_logeados f)))(third f)))
-
-; GET_LISTA_COMPARTIDOS
-
-
