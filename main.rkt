@@ -20,7 +20,7 @@
           pDocs
          (list pDocs user pass date)))
 
-;----------------------------- EJEMPLOS --------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------EJEMPLOS--------------------------------------------------------------------
 (define g_Docs1 (create_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user2""pass2"(date 16 10 2021))"user3""pass3"(date 17 10 2021))))
 ; Los 3 usuarios son unicos
 ;(define g_Docs2 (crear_listas(register(register(register p_docs "user1" "pass1" (date 15 10 2021))"user1""pass2"(date 26 10 2021))"user3""pass3"(date 27 10 2021))))
@@ -44,14 +44,15 @@
           [(eq? f create) (lambda(date name content) (f (logear pDocs user pass)date name content user))]
           [(eq? f share) (lambda(idDoc access . accesses) (f (logear pDocs user pass) idDoc user (cons access accesses)))]
           [(eq? f add) (lambda(idDoc date content) (f (logear pDocs user pass) idDoc date content user ))]
-          [(eq? f restoreVersion) (lambda(idDoc idVersion) (f (logear pDocs user pass) idDoc idVersion user))])
+          [(eq? f restoreVersion) (lambda(idDoc idVersion) (f (logear pDocs user pass) idDoc idVersion user))]
+          [(eq? f revokeAllAccesses)(f (logear pDocs user pass) user)])
         (cond
           [(eq? f create)(lambda(date name content)pDocs)]
           [(eq? f share) (lambda(idDoc access . accesses)pDocs)]
           [(eq? f add) (lambda(idDoc date content) pDocs)]
-          [(eq? f restoreVersion) (lambda(idDoc idVersion)pDocs)])))
+          [(eq? f revokeAllAccesses) pDocs])))
 
-;----------------------------- EJEMPLOS ---------------------------------------------------------------------
+;----------------------------------------------------EJEMPLOS--------------------------------------------------
 ; Los ejemplos de login vienen incluidos en cada función posterior, ya que create no funcion sin operation
 ;------------------------------------------------------------------------------------------------------------
 
@@ -65,7 +66,7 @@
 (define (create pDocs date nombre_doc content user) ; Si el usuario esta en paradigma docs
       (add_doc(deslogear pDocs user) (list user nombre_doc (list(list date content 0))(length(get_lista_docs pDocs)))))
 
-;----------------------------- EJEMPLOS -------------------------------------------------------------------------------------------------------------
+;------------------------------------------------------------EJEMPLOS---------------------------------------------------------------------------------
 (define g_Docs2 ((login g_Docs1 "user1" "pass1" create) (date 30 08 2021) "doc0" (encryptFn "DOC0 creado por user1")))
 ; El usuario existe, por lo tanto se crea el documento y retorna la version actualizada de paradigma_docs
 (define g_Docs3 ((login g_Docs2 "user1" "pass1" create) (date 30 09 2021) "doc1" (encryptFn "2DO DOC1 creado por USER 1")))
@@ -117,15 +118,15 @@
           (deslogear (add_by_id id pDocs (cons  "s"  (ultimo_permiso (registrado_for_share? pDocs user accesses) '())))user))
       (deslogear pDocs user)))
 
-;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------------------------
+;------------------------------------------------------------------EJEMPLOS-------------------------------------------------------------------------------------------
 (define g_Docs5 ((login g_Docs4 "user1" "pass1" share) 0 (access "user1" #\r )(access "user2" #\c)(access "user3" #\c) (access "user1" #\c)))
 (define g_Docs6 ((login g_Docs5 "user1" "pass1" share) 0 (access "user1" #\w )(access "user2" #\w)(access "user3" #\w)))
 (define g_Docs7 ((login g_Docs6 "user2" "pass2" share) 2 (access "user1" #\r )(access "user1" #\w)(access "user2" #\c)(access "user3" #\c)(access "user5" #\c)))
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-g_Docs5
-g_Docs6
-g_Docs7
+;g_Docs5
+;g_Docs6
+;g_Docs7
 
 ; FUNCIÓN ADD:
 ; Representación: (paradigmadocs XX int XX date X string)
@@ -139,38 +140,54 @@ g_Docs7
   (if (or (eq? user (get_creador_doc idDoc (get_lista_docs pdocs))) (list?(member user (get_users_write (get_usuarios_shared idDoc g_Docs7)))))
   (deslogear (list (get_lista_registrados pdocs)(get_lista_logeados pdocs)(aniadir_ver_to_doc idDoc (get_lista_docs pdocs)(add2 pdocs idDoc date text)))user)
   (deslogear pdocs user)))
-;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------------------------
-(define g_Docs8 ((login g_Docs7 "user2" "pass2" add) 2 (date 25 11 2021) "A"))
-(define g_Docs9 ((login g_Docs8 "user2" "pass2" add) 2 (date 10 11 2021) "E"))
+;------------------------------------------------------------------EJEMPLOS----------------------------------------------------------------------------------------------------------------------
+(define g_Docs8 ((login g_Docs7 "user2" "pass2" add) 2 (date 25 11 2021) "D D A "))
+(define g_Docs9 ((login g_Docs8 "user2" "pass2" add) 2 (date 10 11 2021) "2 D D A"))
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-g_Docs8
-g_Docs9
+;g_Docs8
+;g_Docs9
 
 ; FUNCIÓN RESTORE VERSION:
+; Representación: (paradigmadocs XX int XX int)
+; Descripción: Función que 'restaura' un versión, es decir que la versión escogida pasa a ser la versión activa en el documento
+; NOTA: La ultima version actual es la ultima en la lista de versiones creadas, es posible obtenerla mediante un selector llamado (get_active_vr_byid idDoc pdocs)
 ; Condiciones para su funcionamiento:
-; NOTA: La ultima version actual es la ultima en la lista de versiones creadas
 ; 1) La versión debe existir, de lo contrario retorna paradigmadocs sin modificaciones
-; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
+; Dominio: Archivo de paradigmadocs
 ; Recorrido: Archivo actualizado de paradigmadocs con la ultima version activa
 
 (define (restoreVersion pdocs idDoc idVersion user)
   (if(and (eq? user (get_creador_doc idDoc (get_lista_docs pdocs))) (< idVersion  (length (get_all_versions_byid idDoc pdocs))))
-       (deslogear(list (get_lista_registrados pdocs)(get_lista_logeados pdocs)(add_version (get_lista_docs pdocs) idDoc (list (remove (get_version_byid idVersion (get_all_versions_byid idDoc pdocs)) (get_all_versions_byid idDoc pdocs)) (get_version_byid idVersion (get_all_versions_byid idDoc pdocs)))))user)
+       (deslogear (crear_pdocs_docs pdocs(add_version (get_lista_docs pdocs) idDoc (append(list (remove (get_version_byid idVersion (get_all_versions_byid idDoc pdocs)) (get_all_versions_byid idDoc pdocs)) (get_version_byid idVersion (get_all_versions_byid idDoc pdocs))))))user)
        (deslogear pdocs)))
 
-;----------------------------- EJEMPLOS ---------------------------------------------------------------------------------------------------------------------------
+;---------------------------------------------------------------------EJEMPLOS---------------------------------------------------------------------------------
 (define g_Docs10 ((login g_Docs9 "user2" "pass2" restoreVersion) 2 0))
+;(get_active_vr_byid 2 g_Docs9)  ;-> '((10 11 2021) "2resu rop odaerc 2COD  A D D A D D 2" 2)
+;(get_active_vr_byid 2 g_Docs10) ;-> '((31 8 2021) "2resu rop odaerc 2COD" 0)
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
-g_Docs10
+
+;g_Docs10
 
 ; FUNCION REVOKE ALL ACCESSES
+; Representación: (paradigmadocs XX)
+; Descripción: Funcion que elimina los permisos que el usuario ha otorgado a otros usuarios de todos sus documentos
+; Dominio: Archivo de paradigmadocs
+; Recorrido: Archivo de paradigmadocs con todos los permisos de los documentos del usuario eliminados
 
-;(define (revokeAllAccesses user))
+(define (revokeAllAccesses pdocs user)
+  (deslogear(crear_pdocs_docs pdocs (actualizar_permisos (get_lista_docs pdocs) (map eliminar_permisos (get_docs_byuser user (get_lista_docs pdocs))) user))user))
 
+g_Docs10
+;---------------------------------------------------------------------EJEMPLOS---------------------------------------------------------------------------------
+(define g_Docs11(login g_Docs10 "user2" "pass2" revokeAllAccesses))
+;------------------------------------------------------------------------------------------------------------------------------------------------------------------
+g_Docs11
 ; Buscar la lista de los documentos creados por ese user
 ; Eliminar la lista de (shares) quinta posicion en la lista de cada documento
 ; Retornar paradigmadocs
+;(map (lambda (x)(+ x 9))(list 1 2 3))
 ; Usar map, apply to all
   
-  
+;(login g_Docs10 "user2" "pass2" revokeAllAccesses)

@@ -156,8 +156,8 @@
 ; Dominio:  id(int) paradigmadocs(lista)
 ; Recorrido: lista de version activa (lista)
 
-(define (get_active_vr_byid id pdocs)
-  (last(get_all_versions_byid id pdocs)))
+(define (get_active_vr_byid idDoc pdocs)
+  (last(get_all_versions_byid idDoc pdocs)))
 
 ; GET_INACTIVE_VERSIONS: Retorna una lista de las sesiones anteriores (no activas), dado un id de documento
 ; Dominio: id(int) paradigmadocs(lista)
@@ -240,4 +240,30 @@
           (cons (car lista)(add_version (cdr lista) id x))
           (cons (list (car(car lista)) (cadr (car lista))x (cadddr (car lista))(last (car lista))) (add_version (cdr lista) id x)))))
 
+; FUNCION REVOKEALLACCESES:
 
+; Descripción: Obtiene una lista de todos los documentos de un usuario, mediante su username
+; Dominio: user (string) Lista de documentos(lista)
+; Recorrido: Lista de documentos (lista)
+(define (get_docs_byuser user lista_docs)
+  (if (empty? lista_docs)
+      null
+      (if (and (eq?(car(car lista_docs))user))
+          (cons (car lista_docs)(get_docs_byuser user (cdr lista_docs)))
+          (get_docs_byuser user (cdr lista_docs)))))
+
+; Funcion que actualiza la lista de documentos ya que se removieron accesos y devuelve la lista completa de documentos de paradigmadocs
+
+(define (actualizar_permisos lista_docs lista_act user)
+  (if (null? lista_docs)
+      null
+      (if (not(eq? (car (car lista_docs))user))
+          (cons (car lista_docs) (actualizar_permisos (cdr lista_docs) lista_act user))
+          (cons (car lista_act) (actualizar_permisos (cdr lista_docs) (cdr lista_act)user)))))
+
+(define (eliminar_permisos lista_docs)
+  (if (empty? lista_docs)
+      null
+      (if (> (length lista_docs) 4)
+          (remove (fifth lista_docs)lista_docs)
+          lista_docs)))
