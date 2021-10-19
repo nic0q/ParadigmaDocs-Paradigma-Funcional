@@ -45,12 +45,15 @@
           [(eq? f share) (lambda(idDoc access . accesses) (f (logear pDocs user pass) idDoc user (cons access accesses)))]
           [(eq? f add) (lambda(idDoc date content) (f (logear pDocs user pass) idDoc date content user ))]
           [(eq? f restoreVersion) (lambda(idDoc idVersion) (f (logear pDocs user pass) idDoc idVersion user))]
-          [(eq? f revokeAllAccesses)(f (logear pDocs user pass) user)])
+          [(eq? f revokeAllAccesses)(f (logear pDocs user pass) user)]
+          [(eq? f search)(lambda(text)(f (logear pDocs user pass) text user))]
+          )
         (cond
           [(eq? f create)(lambda(date name content)pDocs)]
           [(eq? f share) (lambda(idDoc access . accesses)pDocs)]
           [(eq? f add) (lambda(idDoc date content) pDocs)]
-          [(eq? f revokeAllAccesses) pDocs])))
+          [(eq? f revokeAllAccesses) pDocs]
+          [(eq? f search)(lambda(text) pDocs)])))
 
 ;----------------------------------------------------EJEMPLOS--------------------------------------------------
 ; Los ejemplos de login vienen incluidos en cada función posterior, ya que create no funcion sin operation
@@ -64,7 +67,9 @@
 ; Recorrido: Archivo actualizado de paradigmadocs con el documento creado por el usuario y su desconección de la sesión
 
 (define (create pDocs date nombre_doc content user) ; Si el usuario esta en paradigma docs
-      (add_doc(deslogear pDocs user) (list user nombre_doc (list(list date content 0))(length(get_lista_docs pDocs)))))
+      (if (logeado? pDocs user)
+          (add_doc(deslogear pDocs user) (list user nombre_doc (list(list date content 0))(length(get_lista_docs pDocs))))
+          pDocs))
 
 ;------------------------------------------------------------EJEMPLOS---------------------------------------------------------------------------------
 (define g_Docs2 ((login g_Docs1 "user1" "pass1" create) (date 30 08 2021) "doc0" (encryptFn "DOC0 creado por user1")))
@@ -95,7 +100,6 @@
 ; Recorrido: Archivo actualizado de paradigmadocs con los documentos compartidos por este, id y lista de usuarios con los que se comparte
 ; Tipo de Recursividad: Recursividad Natural
 
-
 (define (share pDocs id user accesses)
   (define (tiene_shares? lista)
   (if (empty? lista)
@@ -103,8 +107,10 @@
       (if (eq? (car(car lista))"s")
           #t
           (tiene_shares? (cdr lista)))))
+  
   (define (crear_permisos pdocs id x)
-  (append (filtrar_ids id (get_lista_docs pdocs))(list(remove(filtrar_shares (filter list? (get_doc_byid id (get_lista_docs pdocs))))(append(get_doc_byid id (get_lista_docs pdocs))(list x))))))
+    (append (filtrar_ids id (get_lista_docs pdocs))(list(remove(filtrar_shares (filter list? (get_doc_byid id (get_lista_docs pdocs))))(append(get_doc_byid id (get_lista_docs pdocs))(list x))))))
+  
   (define(filtrar_shares lista)
     (if (empty? lista)
         null
@@ -112,11 +118,13 @@
            (car lista)
            (filtrar_shares (cdr lista)))))
 ;----------------------------------------->
-  (if (and (eq? user (get_creador_doc id (get_lista_docs pDocs))) (not(null?(get_lista_docs pDocs))) (not(null?(registrado_for_share? pDocs user accesses)))) ; Si no se ha creado ningun documento -> Retorna paradigma_docs, con el usuario deslogeado
-      (if (tiene_shares?(filter list? (get_doc_byid id (get_lista_docs pDocs))))
-          (deslogear(crear_pdocs_docs pDocs (crear_permisos pDocs id (cons "s" (mix (usuarios_share (filter list? (get_doc_byid id (get_lista_docs pDocs))))(ultimo_permiso (registrado_for_share? pDocs user accesses) '())))))user)
-          (deslogear (add_by_id id pDocs (cons  "s"  (ultimo_permiso (registrado_for_share? pDocs user accesses) '())))user))
-      (deslogear pDocs user)))
+  (if (logeado? pDocs user)
+      (if (and (eq? user (get_creador_doc id (get_lista_docs pDocs))) (not(null?(get_lista_docs pDocs))) (not(null?(registrado_for_share? pDocs user accesses)))) ; Si no se ha creado ningun documento -> Retorna paradigma_docs, con el usuario deslogeado
+          (if (tiene_shares?(filter list? (get_doc_byid id (get_lista_docs pDocs))))
+              (deslogear(crear_pdocs_docs pDocs (crear_permisos pDocs id (cons "s" (mix (usuarios_share (filter list? (get_doc_byid id (get_lista_docs pDocs))))(ultimo_permiso (registrado_for_share? pDocs user accesses) '())))))user)
+              (deslogear (add_by_id id pDocs (cons  "s"  (ultimo_permiso (registrado_for_share? pDocs user accesses) '())))user))
+              (deslogear pDocs user))
+               pDocs))
 
 ;------------------------------------------------------------------EJEMPLOS-------------------------------------------------------------------------------------------
 (define g_Docs5 ((login g_Docs4 "user1" "pass1" share) 0 (access "user1" #\r )(access "user2" #\c)(access "user3" #\c) (access "user1" #\c)))
@@ -135,14 +143,17 @@
 ; 1) Solo el usuario y los usuarios con los que el creador del documento haya compartido el documento pueden agregar texto a la ultima version
 ; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
 ; Recorrido: Archivo actualizado de paradigmadocs con los documentos compartidos por este, id y lista de usuarios con los que se comparte
+; Tipo de Recursividad: Recursividad Natural
 
-(define (add pdocs idDoc date text user)
-  (if (or (eq? user (get_creador_doc idDoc (get_lista_docs pdocs))) (list?(member user (get_users_write (get_usuarios_shared idDoc g_Docs7)))))
-  (deslogear (list (get_lista_registrados pdocs)(get_lista_logeados pdocs)(aniadir_ver_to_doc idDoc (get_lista_docs pdocs)(add2 pdocs idDoc date text)))user)
-  (deslogear pdocs user)))
+(define (add pDocs idDoc date text user)
+  (if (logeado? pDocs user)
+      (if (or (eq? user (get_creador_doc idDoc (get_lista_docs pDocs))) (list?(member user (get_users_write (get_accesses_shared idDoc pDocs)))))
+          (deslogear (list (get_lista_registrados pDocs)(get_lista_logeados pDocs)(aniadir_ver_to_doc idDoc (get_lista_docs pDocs)(add2 pDocs idDoc date text)))user)
+          (deslogear pDocs user))
+           pDocs))
 ;------------------------------------------------------------------EJEMPLOS----------------------------------------------------------------------------------------------------------------------
 (define g_Docs8 ((login g_Docs7 "user2" "pass2" add) 2 (date 25 11 2021) "D D A "))
-(define g_Docs9 ((login g_Docs8 "user2" "pass2" add) 2 (date 10 11 2021) "2 D D A"))
+(define g_Docs9 ((login g_Docs8 "user2" "pass2" add) 2 (date 10 11 2021) "D D A 2"))
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ;g_Docs8
@@ -156,18 +167,21 @@
 ; 1) La versión debe existir, de lo contrario retorna paradigmadocs sin modificaciones
 ; Dominio: Archivo de paradigmadocs
 ; Recorrido: Archivo actualizado de paradigmadocs con la ultima version activa
+; Tipo de Recursividad: Recursividad Natural
 
 (define (restoreVersion pdocs idDoc idVersion user)
-  (if(and (eq? user (get_creador_doc idDoc (get_lista_docs pdocs))) (< idVersion  (length (get_all_versions_byid idDoc pdocs))))
-       (deslogear (crear_pdocs_docs pdocs(add_version (get_lista_docs pdocs) idDoc (append(list (remove (get_version_byid idVersion (get_all_versions_byid idDoc pdocs)) (get_all_versions_byid idDoc pdocs)) (get_version_byid idVersion (get_all_versions_byid idDoc pdocs))))))user)
-       (deslogear pdocs)))
+  (if (logeado? pdocs user)
+      (if(and (eq? user (get_creador_doc idDoc (get_lista_docs pdocs))) (< idVersion  (length (get_all_versions_byid idDoc pdocs))))
+       (deslogear (crear_pdocs_docs pdocs(add_version (get_lista_docs pdocs) idDoc (append(remove (get_version_byid idVersion (get_all_versions_byid idDoc pdocs)) (get_all_versions_byid idDoc pdocs)) (list(get_version_byid idVersion (get_all_versions_byid idDoc pdocs))))))user)
+          (deslogear pdocs))
+          pdocs))
 
 ;---------------------------------------------------------------------EJEMPLOS---------------------------------------------------------------------------------
 (define g_Docs10 ((login g_Docs9 "user2" "pass2" restoreVersion) 2 0))
 ;(get_active_vr_byid 2 g_Docs9)  ;-> '((10 11 2021) "2resu rop odaerc 2COD  A D D A D D 2" 2)
 ;(get_active_vr_byid 2 g_Docs10) ;-> '((31 8 2021) "2resu rop odaerc 2COD" 0)
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+;g_Docs9
 ;g_Docs10
 
 ; FUNCION REVOKE ALL ACCESSES
@@ -175,19 +189,39 @@
 ; Descripción: Funcion que elimina los permisos que el usuario ha otorgado a otros usuarios de todos sus documentos
 ; Dominio: Archivo de paradigmadocs
 ; Recorrido: Archivo de paradigmadocs con todos los permisos de los documentos del usuario eliminados
+; Tipo de Recursividad: Recursividad Natural
 
-(define (revokeAllAccesses pdocs user)
-  (deslogear(crear_pdocs_docs pdocs (actualizar_permisos (get_lista_docs pdocs) (map eliminar_permisos (get_docs_byuser user (get_lista_docs pdocs))) user))user))
-
-g_Docs10
+(define (revokeAllAccesses pDocs user)
+  (if (logeado? pDocs user)
+      (deslogear(crear_pdocs_docs pDocs (actualizar_permisos (get_lista_docs pDocs)(map eliminar_permisos (get_docs_byuser user (get_lista_docs pDocs)))user))user)
+      pDocs))
+      
 ;---------------------------------------------------------------------EJEMPLOS---------------------------------------------------------------------------------
 (define g_Docs11(login g_Docs10 "user2" "pass2" revokeAllAccesses))
+(define g_Docs12(login g_Docs11 "user1" "pass1" revokeAllAccesses))
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------------
-g_Docs11
-; Buscar la lista de los documentos creados por ese user
-; Eliminar la lista de (shares) quinta posicion en la lista de cada documento
-; Retornar paradigmadocs
-;(map (lambda (x)(+ x 9))(list 1 2 3))
-; Usar map, apply to all
+;g_Docs11
+;g_Docs12
+
+; FUNCIÓN SEARCH
+; Representación:
+; Descripción: Permite al usuario buscar texto en sus documentos (propios o compartidos por otros usuarios) tanto en las versiones actuales como en las antiguas
+; en caso el texto exista, retornará todos los documentos donde se encuentra, sino retornara un string vació (no hay documentos)
+; Dominio: Archivo de paradigmadocs
+; Recorrido: Lista con los documentos que contienen al texto buscado
+; Tipo de Recursividad: Recursividad Natural
+
+(define (search pDocs text user)
+  (if (logeado? pDocs user)
+      (if (empty? (id_list (encuentra_texto? (get_versions_with_access pDocs user) text pDocs)))
+          null
+      (imprimir_versiones (deslogear pDocs user) (id_list (encuentra_texto? (get_versions_with_access pDocs user) text pDocs))))
+      null))
+
+((login g_Docs9 "user3" "pass3" search) "A")
+((login g_Docs11 "user2" "pass2" search) "A")
+((login g_Docs11 "user3" "pass3" search) "A") ;usuario 3 revocado del acceso al documento 2
+
+
   
-;(login g_Docs10 "user2" "pass2" revokeAllAccesses)
+

@@ -103,9 +103,6 @@
 ; FILTRAR SOLO LAS QUE SON LISTAS
 ; SI ENCUENTRA UNA LISTA QUE TENGA un "s" al principio
 
-(define (get_listas documento)
-  (filter list? documento))
-
 (define (usuarios_share documento)
   (if (empty? documento)
       null
@@ -117,8 +114,8 @@
   (if (empty? lista)
       null
       (if (not(eq? id (get_id (car lista))))
-      (cons (car lista)(filtrar_ids id (cdr lista)))
-      (filtrar_ids id (cdr lista)))))    
+          (cons (car lista)(filtrar_ids id (cdr lista)))
+          (filtrar_ids id (cdr lista)))))    
 
 (define (lista_usuarios_compartidos lista)
   (if (empty? lista)
@@ -181,6 +178,7 @@
   (caddr (get_active_vr_byid id pdocs)))
 
 ; FUNCION ADD
+; ADD_TO_VER (encapsulada) Funcion que añade text a la version mediante su id
 
 (define (add2 pdocs id date text)
   (define (add_to_ver lista id date text)
@@ -211,11 +209,18 @@
 ; Dominio: El id del documento (int), paradigmadocs (lista)
 ; Recorrido: Lista con los usuarios que se comparte el documento
 
-(define (get_usuarios_shared id pdocs)
+(define (get_accesses_shared id pdocs)
   (if (< (length (get_doc_byid id (get_lista_docs pdocs))) 5)
       null
        (cdr(fifth (get_doc_byid id (get_lista_docs pdocs))))))
 
+; GET_ALL_ACCESSES_USERS
+; Funcion que retorna todos los usuarios sin importar que permiso tengo, INCLUIDO EL CREADOR
+(define (get_all_users_shared lista_shares)
+  (if (empty? lista_shares)
+      null
+      (cons (car(car lista_shares)) (get_all_users_shared (cdr lista_shares)))))
+  
 ; GET_USERS_WRITE
 ; Funcion que retorna una lista con los usuarios que pueden editar "escribir" el documento
 ; Dominio: Funcion con todos los usuarios que tienen acceso al documento (funcion ususarios_share)
@@ -267,3 +272,52 @@
       (if (> (length lista_docs) 4)
           (remove (fifth lista_docs)lista_docs)
           lista_docs)))
+
+;FUNCION SEARCH
+
+;Obtiene todos los accesos de los usuarios sin importar el tipo de acceso, mediante el id de documento
+; Dominio: id (int) pdocs(lista)
+; Recorrido: Lista con los usuarios que tienen acceso al documento de id ingresada
+(define (get_all_users_accesses id pdocs)
+  (append (list (get_creador_doc id (get_lista_docs pdocs))) (get_all_users_shared (get_accesses_shared id pdocs))))
+
+; Obtiene una lista de todas las versiones (id) que un usuario tiene acceso
+; Dominio: pdocs(lista) user(string)
+; Recorrido: Lista con los id de los documentos que user tiene acceso
+
+(define (get_versions_with_access pdocs user)
+  (define (get_all_access_docs2 lista_docs user)
+  (if (empty? lista_docs)
+      null
+      (if (list?(member user (get_all_users_accesses (get_id (car lista_docs)) pdocs)))
+          (cons (fourth (car lista_docs)) (get_all_access_docs2 (cdr lista_docs) user) )
+          (get_all_access_docs2 (cdr lista_docs) user))))
+  (get_all_access_docs2 (get_lista_docs pdocs) user))
+
+(define (search_in_docs lista_docs)
+  (if (empty? lista_docs)
+      null
+          (if (empty? (car lista_docs))
+              (search_in_docs (cdr (car (car lista_docs))))
+              (cons (second(car (car lista_docs)))(search_in_docs (cdr lista_docs))))))
+
+(define (get_text_byid lista)
+  (if (empty? lista)
+      null
+      (cons (decryptFn(second(car lista)))(get_text_byid (cdr lista)))))
+
+(define (encuentra_texto? lista_versions text pdocs)
+  (if (empty? lista_versions)
+      null
+      (cons (list (car lista_versions)(filter (lambda (x) (string-contains? x text)) (get_text_byid (get_all_versions_byid (car lista_versions) pdocs))))(encuentra_texto? (cdr lista_versions) text pdocs))))
+
+(define (id_list lista_texto)
+    (if (empty? lista_texto)
+        null
+        (if (not(null?(second(car lista_texto))))
+            (cons (first (car lista_texto))(id_list (cdr lista_texto)))
+            (id_list (cdr lista_texto)))))
+  (define (imprimir_versiones pdocs lista_v)
+  (if (empty? lista_v)
+      null
+      (cons (get_doc_byid (car lista_v)(get_lista_docs pdocs)) (imprimir_versiones pdocs (cdr lista_v)))))
