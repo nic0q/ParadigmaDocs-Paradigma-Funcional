@@ -1,5 +1,4 @@
 #lang racket
-(require "TDA_fecha.rkt")
 (require "TDA_paradigmadocs.rkt")
 (provide (all-defined-out))
 

@@ -1,15 +1,6 @@
 #lang racket
 ; TDA Paradigma Docs
-(require "TDA_fecha.rkt")
-(provide paradigmadocs)
-(provide encryptFn)
-(provide decryptFn)
-(provide get_lista_logeados)
-(provide get_lista_registrados)
-(provide get_lista_docs)
-(provide create_listas)
-(provide access)
-(provide crear_pdocs_docs)
+(provide (all-defined-out))
 
 ; REPRESENTACIÓN:
 
@@ -46,13 +37,13 @@
 ; CREAR_PARADIGMADOCS:
 
 (define (crear_pdocs_docs pDocs x)
-  (list (get_lista_registrados pDocs) (get_lista_logeados pDocs) x)
-  )
+  (list (get_lista_registrados pDocs) (get_lista_logeados pDocs) x))
+  
 ; PERTENENCIA:
 
 ; Descripción: Verifica si el nombre es de tipo string, true, false
-; dom: texto
-; rec: boolean
+; Dominio texto
+; Recorrido: boolean
 
 (define (esnombre? name)
   (if (string? name)
@@ -62,66 +53,38 @@
 
 ; GET_LISTA_REGISTRADOS: Funcion que retorna la lista de los usuarios registrados en paradigmadocs
 ; Dominio: Paradigmadocs
-; Recorrido: lista
+; Recorrido: Lista
 
 (define (get_lista_registrados f)
   (first f))
 
-; Descripción: Función que obtiene el nombre del espacio de trabajo
-; dom: funcion
-; rec: string
-
-(define (get_nombre_pdocs f)
-  (car f))
-
-; GET_FECHA
-; Descripción: Función que obtiene la fecha del espacio de trabajo
-; dom: funcion
-; rec: fecha
-
-(define (get_fecha f)
-  (cadr f))
-
 ; GET_LISTA_LOGEADOS: Funcion que retorna la lista de los usuarios logeados en paradigmadocs
 ; Dominio: Paradigmadocs
-; Recorrido: lista
+; Recorrido: Lista
 
 (define (get_lista_logeados f)
   (second f))
 
 ; GET_LISTA_DOCS: Funcion que retorna la lista de los documentos de paradigmadocs
 ; Dominio: Paradigmadocs
-; Recorrido: lista
+; Recorrido: Lista
 
 (define (get_lista_docs f)
   (third f))
 
-; MODIFICADORES:
-; Descripción: Retorna una version actualizada con el nombre cambiado de paradigmadocs
-; dom: funcion, nombre
-; rec: lista, funcion
-
-(define (cambiar_nombre f nombre)
-  (if (esnombre? nombre)
-  (list nombre (get_fecha f) (caddr f) (cadddr f)) null))
-
-
-; Descripción: Retorna una version actualizada con la fecha cambiada de paradigmadocs
-; dom: funcion, fecha
-; rec: lista, funcion
-
-(define (cambiar_fecha f fecha)
-  (if (date? fecha)
-      (list (get_nombre_pdocs f) fecha (caddr f) (cadddr f))f))
-
-
-; ACCESS: Funcion que retorna los elementos ingresados por una access list
-; Dominio: Cualquier tipo
+; ACCESS: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "access"
+; Dominio: Cualquier tipo de dato (string, int, etc)
 ; Recorrido: Access list (cdr)
 
 (define (access . x ) x )
 
-; ENCRYPT
+; ENCRYPTFN: Funcion que encrypta texto
+; Dominio: texto (string)
+; Recorrido texto encriptado (string)
 
 (define encryptFn (lambda (s) (list->string (reverse (string->list s)))))
+
+; DECRYPTFN: Funcion que desencrypta texto
+; Dominio: texto (string)
+; Recorrido texto desencriptado (string)
 (define decryptFn (lambda (s) (list->string (reverse (string->list s)))))
