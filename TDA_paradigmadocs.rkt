@@ -2,81 +2,52 @@
 ; TDA Paradigma Docs
 (provide (all-defined-out))
 
-; REPRESENTACIÓN:
-
-;(string X list X function X function)
-
-; CONSTRUCTOR:
-; CREATE_LISTA_LOGEADOS: Funcion que crea una lista vacia para los usuarios que en un futuro se logearon
-; Dominio: paradigma_docs (lista)
-; Recorrido: lista vacia
-
-(define (create_lista_logeados f)
- (append (list f) (list null)))
-
-; CREATE_LISTA_DOCS: Funcion que crea una lista donde se colocaran los documentos en un futuro
-; Dominio: paradigma_docs (lista)
-; Recorrido: lista vacia
-
-(define (create_lista_docs f)
- (append (list (first f))(list (second f)) (list null)))
-
-; CREATE_LISTAS: Funcion que junta ambas listas para darle forma a paradigmadocs
-; Dominio: paradigma_docs (lista)
-; Recorrido: lista vacia
-
-(define(create_listas f)(create_lista_docs(create_lista_logeados f)))
-
-; Descripción: Funcion que hace referencia a crear un documento con su nombre, fecha de creación, funcion encriptar y desencriptar
-; Representacion (nombre_doc, (date), encrypt, decrypt) 
-; dom: String XX date XX encrypt XX decrypt
-; rec: Lista
-
 (define (paradigmadocs name date encrypt decrypt)
-  (list name date encrypt decrypt))
-; CREAR_PARADIGMADOCS:
+  (define (crear_lista_registrados)
+        null)
+  (define (crear_lista_logeados)
+        null)
+  (define (crear_lista_documentos)
+        null)
+  (list name date encryptFn decryptFn (crear_lista_registrados) (crear_lista_logeados) (crear_lista_documentos)))
 
-(define (crear_pdocs_docs pDocs x)
-  (list (get_lista_registrados pDocs) (get_lista_logeados pDocs) x))
-  
-; PERTENENCIA:
+; SELECTORES
 
-; Descripción: Verifica si el nombre es de tipo string, true, false
-; Dominio texto
-; Recorrido: boolean
+(define (get_lista_registrados pDocs)
+  (car(cddddr pDocs)))
 
-(define (esnombre? name)
-  (if (string? name)
-      #t #f))
+(define (get_lista_logeados pDocs)
+  (cadr(cddddr pDocs)))
 
-; SELECTORES:
+(define (get_lista_documentos pDocs)
+  (caddr(cddddr pDocs)))
 
-; GET_LISTA_REGISTRADOS: Funcion que retorna la lista de los usuarios registrados en paradigmadocs
-; Dominio: Paradigmadocs
-; Recorrido: Lista
+; FUNCIONES PROPIAS DE LA PLATAFORMA PARADIGMA DOCS
+; TDA PARADIGMADOCS
 
-(define (get_lista_registrados f)
-  (first f))
+(define (get_nombre_plataforma pDocs)
+  (first pDocs))
 
-; GET_LISTA_LOGEADOS: Funcion que retorna la lista de los usuarios logeados en paradigmadocs
-; Dominio: Paradigmadocs
-; Recorrido: Lista
+(define (get_fecha_creacion_plataforma pDocs)
+  (second pDocs))
 
-(define (get_lista_logeados f)
-  (second f))
+(define (get_function1 pDocs) ;ENCRYPT
+  (third pDocs))
 
-; GET_LISTA_DOCS: Funcion que retorna la lista de los documentos de paradigmadocs
-; Dominio: Paradigmadocs
-; Recorrido: Lista
+(define (get_function2 pDocs) ; DECRYPT
+  (fourth pDocs))
 
-(define (get_lista_docs f)
-  (third f))
+; MODIFICADORES
 
-; ACCESS: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "access"
-; Dominio: Cualquier tipo de dato (string, int, etc)
-; Recorrido: Access list (cdr)
+;MODIFICAR_DOCUMENTO: Funcion encargada de crear una versión de paradigmadocs con los cambios respectivos en el documento, las constantes son:
+; nombre_plataforma, fecha_creación, function1, function2, lista_registrados, lista_logeados
+; Dominio: lista paradigmadocs, Contenido (lista)
+; Recorrido lista paradigmadocs
 
-(define (access . x ) x )
+(define (modificar_documento pDocs contenido)
+  (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs)(get_lista_registrados pDocs)(get_lista_logeados pDocs) contenido))
+
+; OTRAS FUNCIONES
 
 ; ENCRYPTFN: Funcion que encrypta texto
 ; Dominio: texto (string)
@@ -88,3 +59,9 @@
 ; Dominio: texto (string)
 ; Recorrido texto desencriptado (string)
 (define decryptFn (lambda (s) (list->string (reverse (string->list s)))))
+
+; ACCESS: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "access"
+; Dominio: Cualquier tipo de dato (string, int, etc)
+; Recorrido: Access list (cdr)
+
+(define (access . x ) x )

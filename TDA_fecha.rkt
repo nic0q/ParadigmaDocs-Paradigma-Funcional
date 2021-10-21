@@ -1,7 +1,6 @@
 #lang racket
-;Implementación del TDA fecha
-(provide date)
-(provide date?)
+;TDA fecha
+(provide (all-defined-out))
 
 
 ;representacion
