@@ -65,12 +65,12 @@
 
 ;------------------------------------------EJEMPLOS-----------------------------------------------------
 (define gDocs2 ((login gDocs1 "user1" "pass1" create) (date 30 08 2021) "doc1" "DOC1"))
-(define gDocs3 ((login gDocs2 "user1" "pass1" create) (date 30 09 2021) "doc2" "DOC2"))
-(define gDocs4 ((login gDocs3 "user1" "pass1" create) (date 30 10 2021) "doc3" "DOC3"))
+(define gDocs3 ((login gDocs2 "user2" "pass2" create) (date 30 09 2021) "doc2" "DOC2"))
+(define gDocs4 ((login gDocs3 "user3" "pass3" create) (date 30 10 2021) "doc3" "DOC3"))
 
-gDocs2
-gDocs3
-gDocs4
+;gDocs2
+;gDocs3
+;gDocs4
 
 ; SHARE:
 ; Descripción: Permite al usuario (propietario de un documento) en paradigmadocs, compartir un documento mediante su id con otros usuarios, otorgando permisos de lectura/escritura/comentarios
@@ -94,11 +94,11 @@ gDocs4
 
 ;---------------------------------------------------------------------EJEMPLOS------------------------------------------------------------------------------------
 (define gDocs5 ((login gDocs4 "user1" "pass1" share) 0 (access "user1" #\r )(access "user1" #\c)(access "user1" #\c) (access "user2" #\w)))
-(define gDocs6 ((login gDocs5 "user1" "pass1" share) 0 (access "user1" #\w )(access "user2" #\w)(access "user3" #\w)))
-(define gDocs7 ((login gDocs6 "user2" "pass2" share) 1 (access "user1" #\r )(access "user1" #\w)(access "user2" #\c)(access "user2" #\c)(access "user5" #\c)))
+(define gDocs6 ((login gDocs5 "user2" "pass2" share) 1 (access "user1" #\w )(access "user2" #\c)(access "user3" #\w)))
+(define gDocs7 ((login gDocs6 "user3" "pass3" share) 2 (access "user1" #\r )(access "user1" #\w)(access "user2" #\c)(access "user2" #\c)(access "user5" #\c)))
 
 ;gDocs5
-gDocs6
+;gDocs6
 ;gDocs7
 
 ;ADD:
@@ -126,7 +126,7 @@ gDocs6
 (define gDocs8 ((login gDocs7 "user2" "pass2" add) 0 (date 20 10 2021) "DDA"))
 (define gDocs9 ((login gDocs8 "user1" "pass1" add) 0 (date 22 10 2021) "DA"))
 
-gDocs8
+;gDocs8
 ;gDocs9
 
 ; RESTORE VERSION
@@ -144,8 +144,8 @@ gDocs8
 (define (restoreVersion paradigmadocs idDoc idVersion user)
   (define (actualizar_documento pDocs idDoc)
     (modificar_documento paradigmadocs (append (list(nuevo_historial paradigmadocs idDoc
-    (append (filter (lambda (x) (equal? idVersion (get_id x))) (get_historialDoc_byid paradigmadocs idDoc))
-    (filter (lambda (x) (not(equal? idVersion (get_id x)))) (get_historialDoc_byid paradigmadocs idDoc)))))
+    (append (filter (lambda (x) (equal? idVersion (get_id_version x))) (get_historialDoc_byid paradigmadocs idDoc))
+            (filter (lambda (x) (not(equal? idVersion (get_id_version x)))) (get_historialDoc_byid paradigmadocs idDoc)))))
      (filter (lambda (x)(not(equal? idDoc (get_id_documento x))))(get_lista_documentos paradigmadocs)))))
   (if (logeado? paradigmadocs user)
       (if (equal? user (get_creadorDoc_byid paradigmadocs idDoc))
@@ -183,7 +183,7 @@ gDocs8
 ;--------------------------EJEMPLOS-------------------------------
 (define gDocs11 (login gDocs10 "user1" "pass1" revokeAllAccesses))
 
-gDocs11
+;gDocs11
 
 ; FUNCIÓN SEARCH
 ; Representación: (paradigmadocs XX string XX)
@@ -207,4 +207,90 @@ gDocs11
 ;gDocs11
 
 ; FUNCIÓN PARADIGMADOCS->STRING
+; 2 casos: Al usarlo sin login y con login
+;(get_lista_registrados gDocs11)
 
+
+
+; REGISTRADOS->STRING: Función que obtiene una versión 'string' de la lista de usuarios registrados en la plataforma paradigmadocs
+; Dominio: paradigmadocs (lista)
+; Recorrido: string
+; Tipo de Recursión: Solo funciones declarativas
+(define (registrados->string pDocs)
+      (string-join(map (lambda (username pass date)
+      (string-append "\nUsuario: "username"\nContraseña: "pass"\nFecha Registro: "(date->string date)"\n"(make-string 35 #\-)))
+           (map (lambda (x) (get_username x)) (get_lista_registrados pDocs))
+           (map (lambda (x) (get_password x)) (get_lista_registrados pDocs))
+           (map (lambda (x) (get_fecha_creacion x)) (get_lista_registrados pDocs)))))
+
+; ACCESSES->STRING: Función que convierte a string los accessos que tienen los usuarios al documento,
+; además la función encapsulada access_name convierte a string el char, entendible por el usuario
+; Dominio: access list (lista_accesses)
+; Recorrido: string
+; Tipo de Recursión: Solo funciones declarativas
+(define (accesses->string lista_accesses)
+  (define (access_name pr)
+    (cond 
+      [(eqv? pr #\w) "escritura"]
+      [(eqv? pr #\c) "comentarios"]
+      [(eqv? pr #\r) "lectura"]))
+  (string-join(map (lambda (user permiso)
+                     (string-append"\n"user" ➞ permiso de "(access_name permiso)))
+                   (map (lambda (x) (get_usuario_share x))lista_accesses)
+                   (map (lambda (x) (get_permiso_share x))lista_accesses))))
+
+; HISTORIAL->STRING: Función que convierte el historial en una versión string
+; Dominio: lista (historial_doc)
+; Recorrido: string
+; Tipo de Recursión: Solo funciones declarativas
+(define (historial->string historial_doc)
+  (string-join(map (lambda (idVer date texto)
+                     (string-append "\nid_versión: "(number->string idVer)"\nCreada el "(date->string date)"\nContenido: "texto"\n* * * * * * * * *\n"))
+                   (map (lambda (x) (get_id_version x)) historial_doc)
+                   (map (lambda (x) (get_date_version x))historial_doc)
+                   (map (lambda (x) (get_texto_version x))historial_doc))))
+
+; DOCUMENTOS->STRING: Función que obtiene una versión 'string' de toda la información de los documentos de paradigmadocs,
+; Componentes Documentos: NombreDoc, Autor, id, versión activa, historial, Usuarios con acceso
+; Dominio: lista X paradigmadocs
+; Recorrido: string
+(define (documentos->string pDocs)
+  (string-join(map (lambda (nombre_doc autor id historial shares)
+                     (string-append "\n"nombre_doc"\nAutor: "autor"\nid: "(number->string id)"\n\nHistorial de Documentos:\n☞Versión Activa:" (historial->string historial)
+                                    "\nUsuarios con acceso:"(accesses->string (filter (lambda (x)(not(null? x)))shares))"\n\n"))
+                   (map (lambda (x) (get_nombre_documento x))(get_lista_documentos pDocs))
+                   (map (lambda (x) (get_autor x))(get_lista_documentos pDocs))
+                   (map (lambda (x) (get_id_documento x))(get_lista_documentos pDocs))
+                   (map (lambda (x) (get_historial_documento x))(get_lista_documentos pDocs))
+                   (map (lambda (x) (get_lista_compartidos x))(get_lista_documentos pDocs)))))
+
+; PARADIGMADOCS->STRING: Función que crea una versión de 'string' para que el contenido de la plataforma paradigmadocs sea entendible por el usuario
+; Dominio: paradigmadocs (lista)
+; Recorrido: string
+; Tipo de Recursión: Solo funciones de forma declarativa: documentos->string, registrados->string, accesses->string, historial->string
+(define (paradigmadocs->string pDocs)
+  (string-append (make-string 15 #\*)" "(get_nombre_plataforma pDocs)" "(make-string 15 #\*)"\nFecha de creación: "(date->string (get_fecha_creacion_plataforma pDocs))
+                 "\n\n➤USUARIOS REGISTRADOS:"(registrados->string pDocs)"\n\n➤DOCUMENTOS:"(documentos->string pDocs)))
+gDocs10
+
+(display(paradigmadocs->string gDocs10))
+
+; Función Encrypt y Decrypt
+
+; Encrypt: Funcion que encrypta texto de una forma distinta al laboratorio
+; Dominio: str (texto)
+; Recorrido: bytes (encryptado)
+(define (encrypt str)
+  (bytes->list (string->bytes/utf-8 str)))
+
+; Decrypt: Función que desencrypt texto de una forma distinta al laboratorio
+; Dominio: bytes (encryptado)
+; Recorrido: str (texto desencryptado)
+(define (decrypt str)
+  (bytes->string/utf-8 (list->bytes str)))
+
+;--------------------------EJEMPLOS-------------------------------
+(encrypt "contraseña1") ; (99 111 110 116 114 97 115 101 195 177 97 49)
+(decrypt (encrypt "contraseña1")) ; "contraseña1"
+
+  

@@ -15,18 +15,29 @@
           (recorrer_lista (cdr lista_registrados)))))
   (recorrer_lista (get_lista_registrados pDocs)))
 
-; GET_USERNAME: Obtiene el username de la lista del usuario
-; Dominio: lista
-; Recorrido: string
+; GET_USERNAME: Función que obtiene el username de una cuenta creada 
+; Dominio: lista (username X pass X date)
+; Recorrido: string 
+(define (get_username cuenta)
+  (car cuenta))
 
-(define (get_username lista_usuario)
-  (first lista_usuario))
+; GET_PASSWORD_CUENTA: Función que obtiene el username de una cuenta creada 
+; Dominio: lista (user X password X date)
+; Recorrido: password (string)
+(define (get_password cuenta)
+  (cadr cuenta))
+
+; GET_FECHA_CREACION: Función que obtiene la fecha de creación de cuenta del usuario
+; Dominio: lista (user X password X date)
+; Recorrido: date (lista)
+(define (get_fecha_creacion cuenta)
+  (caddr cuenta))
 
 ; GET_PASSWORD: Obtiene la contraseña desencriptada de la lista del usuario
 ; Dominio: lista
 ; Recorrido: string
 
-(define (get_password lista_usuario)
+(define (get_password_desencrypt lista_usuario)
  (decryptFn (second lista_usuario)))
 
 ; TIENE_CUENTA?: Retorna un tipo de dato booleano si las credenciales son correctas a las registradas en paradigmadocs
@@ -39,7 +50,7 @@
   (define (recorrer_lista_registrados lista_registrados)
   (if (empty? lista_registrados)
       #f
-      (if (and (equal? user (get_username (car lista_registrados)))(equal? pass (get_password (car lista_registrados))))
+      (if (and (equal? user (get_username (car lista_registrados)))(equal? pass (get_password_desencrypt (car lista_registrados))))
           #t
           (recorrer_lista_registrados (cdr lista_registrados)))))
   (recorrer_lista_registrados (get_lista_registrados pDocs)))
