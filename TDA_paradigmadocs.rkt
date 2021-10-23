@@ -1,5 +1,5 @@
 #lang racket
-; TDA Paradigma Docs
+; TDA PARADIGMADOCS
 (provide (all-defined-out))
 
 (define (paradigmadocs name date encrypt decrypt)
@@ -12,19 +12,6 @@
   (list name date encryptFn decryptFn (crear_lista_registrados) (crear_lista_logeados) (crear_lista_documentos)))
 
 ; SELECTORES
-
-(define (get_lista_registrados pDocs)
-  (car(cddddr pDocs)))
-
-(define (get_lista_logeados pDocs)
-  (cadr(cddddr pDocs)))
-
-(define (get_lista_documentos pDocs)
-  (caddr(cddddr pDocs)))
-
-; FUNCIONES PROPIAS DE LA PLATAFORMA PARADIGMA DOCS
-; TDA PARADIGMADOCS
-
 (define (get_nombre_plataforma pDocs)
   (first pDocs))
 
@@ -37,13 +24,21 @@
 (define (get_function2 pDocs) ; DECRYPT
   (fourth pDocs))
 
+(define (get_lista_registrados pDocs)
+  (fifth pDocs))
+
+(define (get_lista_logeados pDocs)
+  (sixth pDocs))
+
+(define (get_lista_documentos pDocs)
+  (seventh pDocs))
+
 ; MODIFICADORES
 
 ;MODIFICAR_DOCUMENTO: Funcion encargada de crear una versión de paradigmadocs con los cambios respectivos en el documento, las constantes son:
 ; nombre_plataforma, fecha_creación, function1, function2, lista_registrados, lista_logeados
 ; Dominio: lista paradigmadocs, Contenido (lista)
 ; Recorrido lista paradigmadocs
-
 (define (modificar_documento pDocs contenido)
   (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs)(get_lista_registrados pDocs)(get_lista_logeados pDocs) contenido))
 
@@ -52,7 +47,6 @@
 ; ENCRYPTFN: Funcion que encrypta texto
 ; Dominio: texto (string)
 ; Recorrido texto encriptado (string)
-
 (define encryptFn (lambda (s) (list->string (reverse (string->list s)))))
 
 ; DECRYPTFN: Funcion que desencrypta texto
@@ -63,6 +57,4 @@
 ; ACCESS: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "access"
 ; Dominio: Cualquier tipo de dato (string, int, etc)
 ; Recorrido: Access list (cdr)
-
 (define (access . x ) x )
-
