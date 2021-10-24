@@ -102,21 +102,27 @@
 (define (get_contenido_active_version pDocs idDoc)
   (caddr (get_active_version_byid pDocs idDoc)))
 
+; LENGTH ES EL ID :O
+
+(define (set_id_vr paradigmadocs idDoc)
+  (length(get_historialDoc_byid paradigmadocs idDoc)))
+
+(define(set_id_doc paradigmadocs)
+  (length (get_lista_documentos paradigmadocs)))
+
 ; DELETE Y ADD
 
-; ANIADIR_VERSION_ACTIVA: Añade una nueva version "activa" al documento, crea un documento actualizado
+; ANIADIR_VERSION_TO_DOC: Añade una nueva version "activa" al documento, crea un documento actualizado con la nueva version
 ; Dominio: paradigma_docs (lista) idDoc (int) newversion(lista) 
 ; Recorrido: lista (Documento actualizado)
 ; Importante: parametro new version
 ; UTIL PARA DELETE y futuras funciones
-(define (aniadir_version_activa pDocs idDoc new_version)
+(define (set_version_to_doc pDocs idDoc new_version)
   (list (get_tituloDoc_byid pDocs idDoc) (get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (get_historialDoc_byid pDocs idDoc)) (get_compartidosDoc_byid pDocs idDoc)))
 
-; DELETE Y ADD: Funcion que obtiene una lista con los usuarios que tienen permiso de escritura (esto incluye al creador)
-; Representación: lista (strings) (user X user X . . .user X )
-; Dominio: paradigma_docs (lista) idDoc (int)
-; Recorrido: lista
-; UTIL PARA DELETE y futuras funciones
+; ANIADIR_VERSION: Añade una nueva version "activa" al paradigmadocs
+(define (set_version pDocs idDoc x)
+  (modificar_documento pDocs (append (filter(lambda (x) (not(eqv? idDoc (get_id_documento x))))(get_lista_documentos pDocs))(list(set_version_to_doc pDocs idDoc x)))))
 
 ; GET_USUARIO_SHARE: Obtiene el usuario de lista de accesos
 ; Dominio: lista access (user X permiso)
@@ -164,7 +170,7 @@
 ; Obtiene una lista de documentos a los que el usuario tiene acceso, ya sea por que fue compartido o es el creado
 ; GET_DOCUMENTOS COMPARTIDOS: Obtiene los ids de todos los documentos a los que al usuario le fueron compartidos
 (define (get_id_documentos_compartidos pDocs user )
-    (map (lambda(x)(get_id_documento x))(filter (lambda (x) (member user (get_users_with_access x))) (get_lista_documentos pDocs))))
+    (map (lambda(x)(get_id_documento x)) (filter (lambda (x) (member user (get_users_with_access x))) (get_lista_documentos pDocs))))
 
 ; GET_DOCUMENTOS AUTOR: Obtiene los ids de todos los documentos a los que el usuario ha creado
 ; Dominio: paradigmadocs(lista) x user (string)
@@ -181,13 +187,13 @@
 
 ; GET OCURRENCIAS: Funcion que obtiene los documentos en donde se encontro el texto buscado de la forma
 ; ejemplo: ( (1) (2) (...) ) )
-(define (get_ocurrencias lista_versiones paradigmadocs texto )
+; Tipo de Recursividad: Recursividad Natural
+(define (get_id_ocurrencias lista_versiones paradigmadocs texto )
   (if (empty? lista_versiones)
       null 
-      (if
-       (not(empty? (filter (lambda (x) (string-contains? (get_texto_version x) texto))(get_historialDoc_byid paradigmadocs (car lista_versiones)))))
-       (cons (car lista_versiones) (get_ocurrencias (cdr lista_versiones) paradigmadocs texto))
-       (cons (filter (lambda (x) (string-contains? (get_texto_version x) texto))(get_historialDoc_byid paradigmadocs (car lista_versiones)))(get_ocurrencias (cdr lista_versiones) paradigmadocs texto)))))
+      (if (not(empty? (filter (lambda (x) (string-contains? (get_texto_version x) texto))(get_historialDoc_byid paradigmadocs (car lista_versiones)))))
+          (cons (car lista_versiones) (get_id_ocurrencias (cdr lista_versiones) paradigmadocs texto))
+          (cons (filter (lambda (x) (string-contains? (get_texto_version x) texto))(get_historialDoc_byid paradigmadocs (car lista_versiones)))(get_id_ocurrencias (cdr lista_versiones) paradigmadocs texto)))))
 
 ; FILTRA PERMISOS: Filtra permisos bajo tales condiciones, obtiene solamente el username de la lista de permisos, en este  caso de la version anterior a paradigmadocs
 ; 1) El usuario debe estar previamente registrado
@@ -283,5 +289,3 @@
                    (map (lambda (x) (get_historial_documento x))lista_documentos)
                    (map (lambda (x) (get_lista_compartidos x))lista_documentos))))
 
-
-  

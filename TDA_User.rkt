@@ -101,4 +101,3 @@
 ; Recorrido: paradigma_docs (lista)
 (define (deslogear pDocs)
   (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs) (get_lista_registrados pDocs) null (get_lista_documentos pDocs)))
-

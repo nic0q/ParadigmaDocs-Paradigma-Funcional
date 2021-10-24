@@ -13,13 +13,13 @@
 ; Descripción: Funcion que mediante una composición de funciones permite registrar un grupo de usuarios únicos mediante la fecha username y
 ; contraseña del registro, siendo el username un identificador único, en caso existan duplicados, permite solo 1 con ese username
 ; Tipo de recursión: Recursión Natural (función registrado_antes?)
-
-(define (register pDocs date user pass)
-  (define (aniadir_usuario_registrado pDocs user pass date)
-    (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs)(append (list (list user pass date)) (get_lista_registrados pDocs))(get_lista_logeados pDocs) (get_lista_documentos pDocs)))
-    (if (registrado_antes? pDocs user)
-        pDocs
-        (aniadir_usuario_registrado pDocs user (encryptFn pass) date)))
+;((get_function1 gDocs11)"IT WORKS")
+(define (register paradigmadocs date user pass)
+  (define (aniadir_usuario_registrado paradigmadocs user pass date) ;(modificar_documento pDocs contenido)
+    (list (get_nombre_plataforma paradigmadocs)(get_fecha_creacion_plataforma paradigmadocs)(get_function1 paradigmadocs)(get_function2 paradigmadocs) (append (list (list user pass date)) (get_lista_registrados paradigmadocs))(get_lista_logeados paradigmadocs) (get_lista_documentos paradigmadocs)))
+    (if (registrado_antes? paradigmadocs user)
+        paradigmadocs
+        (aniadir_usuario_registrado paradigmadocs user ((get_function1 paradigmadocs) pass) date)))
 
 ;---------------------------------------------------------------------EJEMPLOS------------------------------------------------------------------------------------
 (define gDocs1 (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user2" "pass2") (date 27 10 2021) "user3" "pass3"))
@@ -33,7 +33,7 @@
 ; Tipo de Recursión: Recursión Natural (unción tiene_cuenta?, función registrado_antes?)
 
 (define (login paradigmadocs username password operation)
-    (if (tiene_cuenta? paradigmadocs username password) ; Si el usuario esta registrado en paradigma docs y tiene la contraseña correcta
+    ;(if (tiene_cuenta? paradigmadocs username password) ; Si el usuario esta registrado en paradigma docs y tiene la contraseña correcta
         (cond
           [(eq? operation create) (lambda(date nombre contenido) (operation (logear paradigmadocs username password)date nombre contenido))]
           [(eq? operation share)  (lambda(idDoc access . accesses) (operation (logear paradigmadocs username password) idDoc (cons access accesses)))]
@@ -41,17 +41,10 @@
           [(eq? operation restoreVersion) (lambda(idDoc idVersion) (operation (logear paradigmadocs username password) idDoc idVersion))]
           [(eq? operation revokeAllAccesses)(operation (logear paradigmadocs username password))]
           [(eq? operation search) (lambda(searchText)  (operation (logear paradigmadocs username password) searchText))]
-          [(eq? operation paradigmadocs->string)(operation (logear paradigmadocs username password))])
-        (cond
-          [(eq? operation create) (lambda(date name content)paradigmadocs)]
-          [(eq? operation share)  (lambda(idDoc access . accesses)paradigmadocs)]
-          [(eq? operation add)    (lambda(idDoc date content) paradigmadocs)]
-          [(eq? operation restoreVersion) (lambda(idDoc idVersion) paradigmadocs)]
-          [(eq? operation revokeAllAccesses) paradigmadocs]
-          [(eq? operation search) (lambda(searchText) paradigmadocs)]
-          [(eq? operation paradigmadocs->string)paradigmadocs]
-          [(eq? operation search) (lambda(searchText) paradigmadocs)]
-          [(eq? operation paradigmadocs->string)paradigmadocs])))
+          [(eq? operation paradigmadocs->string) (operation (logear paradigmadocs username password))]
+          [(eq? operation delete) (lambda (idDoc date numberOfCharacters)(operation (logear paradigmadocs username password) idDoc date numberOfCharacters))]
+          [(eq? operation replace) (lambda (idDoc date searchText replaceText)(operation (logear paradigmadocs username password) idDoc date searchText replaceText))]
+          [else null]))
 
 ; CREATE
 ; TITUTO PROPIETARIO (VERSION ACTIVA (FECHA CONTENIDO) ID) (HISTORIAL DE VERSIONES)
@@ -65,7 +58,7 @@
   (define (nuevo_documento pDocs date title contenido creador)
     (modificar_documento paradigmadocs (append (list(list title creador (length(get_lista_documentos pDocs))(list(list (length(get_historialDoc_byid pDocs (length(get_lista_documentos pDocs)))) date contenido))null))(get_lista_documentos pDocs))))
   (if (and (logeado? paradigmadocs)(string? nombre)(string? contenido))
-      (deslogear (nuevo_documento paradigmadocs date nombre (encryptFn contenido) (get_logeado paradigmadocs)))
+      (deslogear (nuevo_documento paradigmadocs date nombre ((get_function1 paradigmadocs) contenido) (get_logeado paradigmadocs)))
       paradigmadocs))
 
 ;------------------------------------------EJEMPLOS-----------------------------------------------------
@@ -83,7 +76,7 @@
 ; 1) ¿El creador del documento es el mismo que desea compartir? -> Si, se ejecuta la funcion compartir; No, la funcion no se ejecuta
 ; 2) ¿Los usuarios con los que sea quiere compartir, estan registrados ? -> Si, se agrega a la lista de compartidos; No, no se agrega a la lista de compartidos
 ; 3) El usuario no puede compartir un documento consigo mismo
-; 4) Los permisos otorgados solo pueden ser (#\r / #\w / #\c)
+; 4) Los permisos otorgados solo pueden ser (#\r || #\w || #\c)
 ; 5) El usuario puede quitar y colocar distintos permisos, el ultimo dado a tal usuario es el activo
 ; Representación: (paradigmadocs XX int XX access [string char])
 ; Dominio: Archivo de paradigmadocs con los usuarios registrados en la plataforma
@@ -117,13 +110,10 @@
 
 (define (add paradigmadocs idDoc date contenidoTexto)
   (define (add_texto_nueva_vr pDocs idDoc date texto) ;Funcion propia de la Funcion ADD que añade texto al FINAL, nota: para fnciones como apply styles, comment, podría resultar util aplicar otras funciones
-    (list (length(get_historialDoc_byid pDocs idDoc)) date(encryptFn(string-join (list(decryptFn(get_contenido_active_version pDocs idDoc)) texto)))))
-  (define (actualizar pDocs idDoc)
-    (modificar_documento paradigmadocs (append (list(aniadir_version_activa paradigmadocs idDoc (add_texto_nueva_vr pDocs idDoc date  contenidoTexto)))
-     (filter (lambda (x) (not(equal? idDoc (get_id_documento x))))(get_lista_documentos pDocs)))))
+    (list (length(get_historialDoc_byid pDocs idDoc)) date ((get_function1 paradigmadocs) (string-join (list(decryptFn(get_contenido_active_version pDocs idDoc)) texto)))))
       (if (logeado? paradigmadocs)
           (if (member (get_logeado paradigmadocs) (users_with_all_access paradigmadocs idDoc))
-              (deslogear (actualizar paradigmadocs idDoc))
+              (deslogear (set_version paradigmadocs idDoc (add_texto_nueva_vr paradigmadocs idDoc date contenidoTexto)))
               (deslogear paradigmadocs))
           paradigmadocs))
 
@@ -197,9 +187,9 @@
 ; Funciones Declarativas: Filter / map en get_ocurrencias y documentos_con_acceso
 
 (define (search paradigmadocs texto)
-  (if (logeado? paradigmadocs (get_logeado paradigmadocs))
+  (if (logeado? paradigmadocs)
       (map (lambda (x) (get_doc_byId paradigmadocs x))
-           (filter (lambda (x) (not(null? x))) (get_ocurrencias (get_id_documentos_acceso paradigmadocs (get_logeado paradigmadocs)) paradigmadocs (decryptFn texto))))
+           (filter (lambda (x) (not(null? x))) (get_id_ocurrencias (get_id_documentos_acceso paradigmadocs (get_logeado paradigmadocs)) paradigmadocs (decryptFn texto))))
       null))
 
 ;-------------------EJEMPLOS----------------------
@@ -219,7 +209,7 @@
       (string-append (make-string 15 #\*)" "(get_nombre_plataforma paradigmadocs)" "(make-string 15 #\*)"\nFecha de creación: "(date->string (get_fecha_creacion_plataforma paradigmadocs))
                  "\n\n➤USUARIOS REGISTRADOS:"(registrados->string paradigmadocs)"\n\n➤DOCUMENTOS:"(documentos->string (get_lista_documentos paradigmadocs)))))
 
-;-----------------------------EJEMPLOS--------------------------------
+;-----------------------------EJEMPLOS-------------------------------------------
 (define gDocs12 (login gDocs11 "user3" "pass3" paradigmadocs->string)) ;(display gDocs12)
 (define gDocs012 (login gDocs11 "user1" "pass3" paradigmadocs->string)) ;(display gDocs012)
 (define gDocs0012 (login gDocs11 "user2" "pass2" paradigmadocs->string)) ;(display gDocs0012)
@@ -227,7 +217,35 @@
 (define gDocs000012 (paradigmadocs->string gDocs11)) ;(display gDocs000012)
 (define gDocs13 (paradigmadocs->string gDocs11))     ;(display gDocs13)
 
-; CAMBIAR EL PASO DE PARAMETRO DEL USUARIO (ESTA MAL) ; GET USUARIO LOGEADO Y ERA
+; DELETE
+; LISTA-CARACTERES: Crea una lista con los todos los caracteres del texto de la ultima version del documento, mediante su id
+; get_vr_text: Obtiene el texto de una version y lo desencrypta
+; Dominio:
+; Recorrido:
+
+(define (lista_caracteres pDocs idDoc)
+  (reverse(map string (string->list (get_contenido_active_version pDocs idDoc)))))
+
+;gDocs11
+
+; DELETE_CHARACTERS: Elimina los ultimos caracteres "x" un string y retorna una lista con los caracteres eliminados
+; Dominio: paradigmadocs (lista) idDoc (int) "x" (int)
+; Recorrido: Lista
+; Tipo de Recursión: Recursión de cola
+(define (delete paradigmadocs idDoc date numberOfCharacters)
+  (define (nueva_ver) ;Funcion propia (encapsulada) de la Funcion DELETE que elimina texto del final
+    (if (>= numberOfCharacters (length(lista_caracteres paradigmadocs idDoc )))
+        (list (length(get_historialDoc_byid paradigmadocs idDoc)) date "") ;; RETORNA CADENA VACIA, ya que se borro todo el texto ((get_function2 pDocs)get_contenido_active_version)
+        (list (length(get_historialDoc_byid paradigmadocs idDoc)) date ((get_function1 paradigmadocs) (substring ((get_function2 paradigmadocs)(get_contenido_active_version paradigmadocs idDoc))0(-(string-length (get_contenido_active_version paradigmadocs idDoc)) numberOfCharacters)))))) ; Se elimina el texto
+  (if (logeado? paradigmadocs)
+      (if (member (get_logeado paradigmadocs) (users_with_all_access paradigmadocs idDoc))
+          (deslogear (set_version paradigmadocs idDoc(nueva_ver)))
+          (deslogear paradigmadocs))
+      paradigmadocs))
+
+;-----------------------------EJEMPLOS-------------------------------------------
+(define gDocs15 ((login gDocs11 "user1" "pass1" delete) 2 (date 30 11 2021) 3))
+gDocs15
 
 ; ENCRYPT
 ; Encrypt: Funcion que encrypta texto de una forma distinta al laboratorio
@@ -246,5 +264,33 @@
 ;-------------------------------EJEMPLOS---------------------------------
 ;(encrypt "contraseña1") ; (99 111 110 116 114 97 115 101 195 177 97 49)
 ;(decrypt (encrypt "contraseña1")) ; "contraseña1"
+
+;((login gDocs11 "user3" "pass3" search) "DOC")
+
+;(map (lambda (x) (get_contenido_active_version gDocs15 x))(get_id_documentos_acceso gDocs15 "user1"))
+
+; RECORRER LA LISTA DE DOCUMENTOS; VER SI ES CREADOR O SI SE LE HA COMPARTIDO EL DOCUMENTO
+
+(define (replace paradigmadocs idDoc date searchText replaceText)
+  (if (logeado? paradigmadocs)
+      (if (member (get_logeado paradigmadocs )(users_with_all_access paradigmadocs idDoc))
+          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) searchText) ; Si encuentra texto
+              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) searchText ((get_function2 paradigmadocs)replaceText)))))
+              (deslogear paradigmadocs))
+          (deslogear paradigmadocs))
+      paradigmadocs))
+
+;----------------------------------------EJEMPLOS-------------------------------------------------
+(define gDocs16 ((login gDocs15 "user1" "pass1" replace ) 0 (date 20 10 2021) "O" "C H A N G E"))
+
+
+(define (comment paradigmadocs idDoc date selectedText commenText)
+  (if (logeado? paradigmadocs)
+      (if (member (get_logeado paradigmadocs )(users_with_all_access paradigmadocs idDoc))
+          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) selectedText) ; Si encuentra texto
+              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) selectedText ((get_function2 paradigmadocs)commenText)))))
+              (deslogear paradigmadocs))
+          (deslogear paradigmadocs))
+      paradigmadocs))
 
 
