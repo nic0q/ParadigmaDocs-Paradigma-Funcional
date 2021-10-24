@@ -36,7 +36,7 @@
     ;(if (tiene_cuenta? paradigmadocs username password) ; Si el usuario esta registrado en paradigma docs y tiene la contraseña correcta
         (cond
           [(eq? operation create) (lambda(date nombre contenido) (operation (logear paradigmadocs username password)date nombre contenido))]
-          [(eq? operation share)  (lambda(idDoc access . accesses) (operation (logear paradigmadocs username password) idDoc (cons access accesses)))]
+          [(eq? operation share)  (lambda(idDoc accesslist . accesses) (operation (logear paradigmadocs username password) idDoc (cons accesslist accesses)))]
           [(eq? operation add)    (lambda(idDoc date content) (operation (logear paradigmadocs username password) idDoc date content))]
           [(eq? operation restoreVersion) (lambda(idDoc idVersion) (operation (logear paradigmadocs username password) idDoc idVersion))]
           [(eq? operation revokeAllAccesses)(operation (logear paradigmadocs username password))]
@@ -44,6 +44,8 @@
           [(eq? operation paradigmadocs->string) (operation (logear paradigmadocs username password))]
           [(eq? operation delete) (lambda (idDoc date numberOfCharacters)(operation (logear paradigmadocs username password) idDoc date numberOfCharacters))]
           [(eq? operation replace) (lambda (idDoc date searchText replaceText)(operation (logear paradigmadocs username password) idDoc date searchText replaceText))]
+          [(eq? operation comment) (lambda (idDoc date selectedText commenText)(operation (logear paradigmadocs username password) idDoc date selectedText commenText))]
+          [(eq? operation applyStyles) (lambda (idDoc date searchText accesslist . styles)(operation (logear paradigmadocs username password) idDoc date searchText (cons accesslist styles)))]
           [else null]))
 
 ; CREATE
@@ -56,7 +58,7 @@
   
 (define (create paradigmadocs date nombre contenido)
   (define (nuevo_documento pDocs date title contenido creador)
-    (modificar_documento paradigmadocs (append (list(list title creador (length(get_lista_documentos pDocs))(list(list (length(get_historialDoc_byid pDocs (length(get_lista_documentos pDocs)))) date contenido))null))(get_lista_documentos pDocs))))
+    (set_documento paradigmadocs (append (list(list title creador (length(get_lista_documentos pDocs))(list(list (length(get_historialDoc_byid pDocs (length(get_lista_documentos pDocs)))) date contenido))null))(get_lista_documentos pDocs))))
   (if (and (logeado? paradigmadocs)(string? nombre)(string? contenido))
       (deslogear (nuevo_documento paradigmadocs date nombre ((get_function1 paradigmadocs) contenido) (get_logeado paradigmadocs)))
       paradigmadocs))
@@ -86,7 +88,7 @@
 (define (share paradigmadocs idDoc accesses)
   (if (logeado? paradigmadocs)
       (if (equal? (get_logeado paradigmadocs) (get_creadorDoc_byid paradigmadocs idDoc))
-          (deslogear (modificar_documento paradigmadocs (aniadir_permisos paradigmadocs idDoc (filtrar_permisos (get_compartidosDoc_byid paradigmadocs idDoc) accesses paradigmadocs idDoc))))
+          (deslogear (set_documento paradigmadocs (aniadir_permisos paradigmadocs idDoc (filtrar_permisos (get_compartidosDoc_byid paradigmadocs idDoc) accesses paradigmadocs idDoc))))
           (deslogear paradigmadocs))
       paradigmadocs))
 
@@ -136,7 +138,7 @@
 
 (define (restoreVersion paradigmadocs idDoc idVersion)
   (define (actualizar_documento pDocs idDoc)
-    (modificar_documento paradigmadocs (append (list(nuevo_historial paradigmadocs idDoc
+    (set_documento paradigmadocs (append (list(nuevo_historial paradigmadocs idDoc
     (append (filter (lambda (x) (equal? idVersion (get_id_version x))) (get_historialDoc_byid paradigmadocs idDoc))
             (filter (lambda (x) (not(equal? idVersion (get_id_version x)))) (get_historialDoc_byid paradigmadocs idDoc)))))
      (filter (lambda (x)(not(equal? idDoc (get_id_documento x))))(get_lista_documentos paradigmadocs)))))
@@ -165,7 +167,7 @@
   (define (actualizar_documento pDocs)
     (if (empty? (filter (lambda (x) (equal? (get_logeado paradigmadocs) (get_autor x))) (get_lista_documentos paradigmadocs)))
         pDocs 
-        (modificar_documento paradigmadocs (append (filter (lambda (x) (not(equal? (get_logeado paradigmadocs) (get_autor x)))) (get_lista_documentos paradigmadocs)) 
+        (set_documento paradigmadocs (append (filter (lambda (x) (not(equal? (get_logeado paradigmadocs) (get_autor x)))) (get_lista_documentos paradigmadocs)) 
                                                    (map eliminar_permisos (filter (lambda (x) (equal? (get_logeado paradigmadocs) (get_autor x))) (get_lista_documentos paradigmadocs)))))))
   (if (logeado? paradigmadocs)                ;Elimina los permisos de los documentos que es usuario y no hace nada a los documentos que no es creador mediante filter
       (deslogear(actualizar_documento paradigmadocs))
@@ -274,23 +276,44 @@ gDocs15
 (define (replace paradigmadocs idDoc date searchText replaceText)
   (if (logeado? paradigmadocs)
       (if (member (get_logeado paradigmadocs )(users_with_all_access paradigmadocs idDoc))
-          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) searchText) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) searchText ((get_function2 paradigmadocs)replaceText)))))
+          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText)) ; Si encuentra texto
+              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText) ((get_function2 paradigmadocs)replaceText)))))
               (deslogear paradigmadocs))
           (deslogear paradigmadocs))
       paradigmadocs))
 
 ;----------------------------------------EJEMPLOS-------------------------------------------------
-(define gDocs16 ((login gDocs15 "user1" "pass1" replace ) 0 (date 20 10 2021) "O" "C H A N G E"))
+(define gDocs16 ((login gDocs15 "user1" "pass1" replace ) 0 (date 20 10 2021) "DOC" "C H A N G E"))
 
+;COMMENT:
 
 (define (comment paradigmadocs idDoc date selectedText commenText)
   (if (logeado? paradigmadocs)
       (if (member (get_logeado paradigmadocs )(users_with_all_access paradigmadocs idDoc))
-          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) selectedText) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) selectedText ((get_function2 paradigmadocs)commenText)))))
+          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)selectedText)) ; Si encuentra texto
+              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc)((get_function2 paradigmadocs)selectedText)(string-append ((get_function2 paradigmadocs)selectedText) "->%c "((get_function2 paradigmadocs)commenText) " c% ")))))
               (deslogear paradigmadocs))
           (deslogear paradigmadocs))
       paradigmadocs))
 
 
+(define gDocs17 ((login gDocs16 "user1" "pass1" comment ) 1 (date 20 10 2021)  "DOC"  "comentario"))
+;gDocs16
+;gDocs17
+
+;APPLYSTYLES: 
+(define (applyStyles paradigmadocs idDoc date searchText styles)
+  (if (logeado? paradigmadocs)
+      (if (member (get_logeado paradigmadocs )(users_with_all_access paradigmadocs idDoc))
+          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText)) ; Si encuentra texto
+              (deslogear (set_version paradigmadocs idDoc (list(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText) (string-append " "(set_styles styles)" "((get_function2 paradigmadocs)searchText)" "(set_styles styles)" ")))))
+              ;(filter (lambda(x)(member x (list #\i #\b #\u)))styles)
+              ; por algun motivo, crea 2 "" al principio y al final, por eso reverse y cdr)
+              (deslogear paradigmadocs))
+          (deslogear paradigmadocs))
+      paradigmadocs))
+
+;----------------------------------------EJEMPLOS-------------------------------------------------
+(define gDocs18 ((login gDocs15 "user1" "pass1" applyStyles) 0 (date 20 10 2021) "DOC"  #\b #\u #\i #\y))
+
+gDocs18

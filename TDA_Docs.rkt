@@ -122,7 +122,7 @@
 
 ; ANIADIR_VERSION: Añade una nueva version "activa" al paradigmadocs
 (define (set_version pDocs idDoc x)
-  (modificar_documento pDocs (append (filter(lambda (x) (not(eqv? idDoc (get_id_documento x))))(get_lista_documentos pDocs))(list(set_version_to_doc pDocs idDoc x)))))
+  (set_documento pDocs (append (filter(lambda (x) (not(eqv? idDoc (get_id_documento x))))(get_lista_documentos pDocs))(list(set_version_to_doc pDocs idDoc x)))))
 
 ; GET_USUARIO_SHARE: Obtiene el usuario de lista de accesos
 ; Dominio: lista access (user X permiso)
@@ -209,7 +209,7 @@
       (if (null? lista)
           null
           (if (member (get_permiso_share (car lista))(list #\w #\c #\r)) ; Solo si el permiso tiene la sintaxis correcta: (#\w or #\c or #\r)
-              (if (list? (member (get_usuario_share (car lista)) lista_unicos)) ;A ACA 
+              (if (list? (member (get_usuario_share (car lista)) lista_unicos)) 
                   (encap (cdr lista) lista_unicos)
                   (cons (car lista) (encap (cdr lista) (append (list(get_usuario_share(car lista))) lista_unicos))))
               (encap (cdr lista) lista_unicos))))
@@ -288,4 +288,13 @@
                    (map (lambda (x) (get_id_documento x)) lista_documentos)
                    (map (lambda (x) (get_historial_documento x))lista_documentos)
                    (map (lambda (x) (get_lista_compartidos x))lista_documentos))))
+
+; SET_STYLES: Función que crea un string con los estilos para agregarlo al documento, ademas se filtra la acceslist style para que los estilos solo sean italic, bold, underlined(#\i #\b #\u)
+; Dominio: access list (styles)
+; Recorrido: string
+; Tipo de Recursión: implicita en funciones declarativas: map
+(define (set_styles styles)
+  (string-join(map(lambda(x)(string-append "#/" x ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (lambda(x)(member x (list #\i #\b #\u)))styles))""))))))))
+
+
 

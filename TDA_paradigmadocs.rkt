@@ -39,7 +39,7 @@
 ; nombre_plataforma, fecha_creación, function1, function2, lista_registrados, lista_logeados
 ; Dominio: lista paradigmadocs, Contenido (lista)
 ; Recorrido lista paradigmadocs
-(define (modificar_documento pDocs contenido)
+(define (set_documento pDocs contenido)
   (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs)(get_lista_registrados pDocs)(get_lista_logeados pDocs) contenido))
 
 ; OTRAS FUNCIONES
@@ -54,7 +54,12 @@
 ; Recorrido texto desencriptado (string)
 (define decryptFn (lambda (s) (list->string (reverse (string->list s)))))
 
-; ACCESS: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "access"
-; Dominio: Cualquier tipo de dato (string, int, etc)
+; ACCESS: Funcion que retorna una lista con los elementos ingresados (cdr) por una access list, (car) es la cabeza "access", es usada para almacenar los permisos a un documento
+; Dominio: char
 ; Recorrido: Access list (cdr)
 (define (access . x ) x )
+
+; STYLES: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "styles", es usada para almacenar los estilos aplicados a un documento
+; Dominio: char
+; Recorrido: Access list (cdr)
+(define (styles . x ) x )
