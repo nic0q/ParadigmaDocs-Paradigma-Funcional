@@ -1,18 +1,57 @@
 #lang racket
 (require "TDA_paradigmadocs.rkt")
 (provide (all-defined-out))
+; ES_USUARIO?
+; Dominio: x
+; Recorrido: boolean
+(define (es_usuario? user)
+  (string? user))
+
+; ES_PASSWORD?: Funcion que comprueba si una contraseña válida
+; Dominio: x
+; Recorrido: boolean
+(define (es_password? password)
+  (string? password))
+
+; ES_TEXTO?: Funcion que comprueba si es texto válido
+; Dominio: x
+; Recorrido: boolean
+(define (es_texto? texto)
+  (string? texto))
+
+; ES_NOMBRE?: Funcion que comprueba si es un nombre válido
+; Dominio: x
+; Recorrido: boolean
+(define (es_nombre? nombre)
+  (string? nombre))
+
+; ES_ID?: Funcion que comprueba si es un id válido
+; Dominio: x
+; Recorrido: boolean
+(define (es_id? id)
+  (integer? id))
+
+; INSERTAR_AL_FINAL: Función que añade un elemento al final de la lista
+; Dominio: lista x elemento
+; Recorrido: lista
+; Tipo de Recursividad: Recursividad Natural
+(define (registrar_usuario lista n)
+  (if (empty? lista)
+      (cons n null)
+      (cons (car lista) (registrar_usuario (cdr lista )n))))
 
 ; REGISTRADO_ANTES?: Retorna un dato booleano segun, el usurio esta registrado o no
 ; Dominio: paradigma_docs (lista), string
 ; Recorrido: boolean
 (define (registrado_antes? pDocs user)
   (define (recorrer_lista lista_registrados)
-  (if (empty? lista_registrados)
-      #f
-      (if (eqv? user (car(car lista_registrados)))
-          #t
-          (recorrer_lista (cdr lista_registrados)))))
-  (recorrer_lista (get_lista_registrados pDocs)))
+    (if (empty? lista_registrados)
+        #f
+        (if (eqv? user (car(get_username lista_registrados)))
+            #t
+            (recorrer_lista (cdr lista_registrados)))))
+
+(recorrer_lista (get_lista_registrados pDocs)))
 
 ; GET_CUENTA: Función que busca e imprime la cuenta mediante su user name de la forma (user X password X date )
 ; Dominio: paradigmadocs (lista) X user (string)
@@ -89,10 +128,9 @@
       #f
       #t))
 
-; GET_LOGEADO: Función que retorna el usuario logeado en la lista de logeados
+; GET_LOGEADO: Función que retorna al unico usuario logeado en paradigmadocs
 ; Dominio: lista
 ; Recorrido: string
-
 (define (get_logeado pDocs)
   (car (get_lista_logeados pDocs)))
 

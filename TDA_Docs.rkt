@@ -1,14 +1,16 @@
 #lang racket
-(provide (all-defined-out))
 (require "TDA_paradigmadocs.rkt")
 (require "TDA_User.rkt")
 (require "TDA_fecha.rkt")
+(provide (all-defined-out))
 
 ; GET_NOMBRE_DOCUMENTO: Obtiene el nombre del documento
+; Dominio: lista (lista documento)
+; Recorrido: string
 (define (get_nombre_documento documento)
   (car documento))
 
-; GET_ID_DOCUMENTO: Obtiene el id del documento
+; GET_ID_DOCUMENTO: Función que obtiene el id del documento
 ; Get Id Documento mediante el documento: Solo es usada por filter, ya que tenemos que recorrer la lista mediante su id
 ; Funcion encapsulada propia del TDA Documento que obtiene el 3er elemento de un documento, usada por la funcion (get_doc_byid) y (filter para agregar elementos)
 ; Dominio: lista (lista documento)
@@ -16,66 +18,68 @@
 (define (get_id_documento documento)
   (caddr documento))
 
-; GET_AUTOR_DOCUMENTO: Obtiene el texto de un documento
+; GET_AUTOR_DOCUMENTO: Función que obtiene el texto de un documento
 ; Dominio: lista (documento)
 ; Recorrido: string (autor)
 (define (get_autor documento)
   (cadr documento))
 
-; GET_HISTORIAL_DOCUMENTO: Obtiene el historial de versiones de un documento
+; GET_HISTORIAL_DOCUMENTO: Función que obtiene el historial de versiones de un documento
 ; Dominio: lista (documento)
 ; Recorrido: lista (versiones)
 (define (get_historial_documento documento)
   (cadddr documento))
 
-; GET_LISTA_COMPARTIDOS: Obtiene la lista de usuarios con los que se comparte el documento
+; GET_LISTA_COMPARTIDOS: Función que obtiene la lista de usuarios con los que se comparte el documento
 ; Dominio: lista (documento)
 ; Recorrido: 
 (define (get_lista_compartidos documento)
   (car(cddddr documento)))
 
-; GET_TITULO_DOC: Retorna el título del documento mediante su id
-; Dominio: paradigma_docs (lista) idDoc (int)
+; GET_TITULO_DOC: Función que retorna el título del documento mediante su id
+; Dominio: paradigma_docs X int
 ; Recorrido: string
 (define (get_tituloDoc_byid pDocs idDoc)
   (if (null? (get_doc_byId pDocs idDoc))
       null
       (car(get_doc_byId pDocs idDoc))))
 
-; GET_TEXTO_VERSION:
-; Dominio: lista (documento)
-; Recorrido: string (texto)
+; GET_TEXTO_VERSION: Función que retorna el contenido "texto" de una versión
+; Dominio: lista
+; Recorrido: string
 (define (get_texto_version version)
   (caddr version))
 
-; GET_DATE_VERSION: Función que retorna la fecha donde se modificó la versión
+; GET_DATE_VERSION: Función que retorna la fecha de una versión
+; Dominio: lista
+; Recorrido: date
 (define (get_date_version version)
   (cadr version))
 
-; GET_ID_VERSION:
-; Dominio: lista (documento)
-; Recorrido: int (version)
+; GET_ID_VERSION: Función que retorna el id de una versión
+; Dominio: lista
+; Recorrido: int
 (define (get_id_version version)
   (car version))
 
 ; GET_DOC_BYID: Obtiene el documento completo mediante su id
-; Dominio: paradigma_docs (lista) idDoc (int)
+; Dominio: paradigma_docs X int
 ; Recorrido: documento (lista)
 (define (get_doc_byId pDocs idDoc)
   (if (null? (filter (lambda (x) (equal? idDoc (get_id_documento x)))(get_lista_documentos pDocs)))
       null
       (car(filter (lambda (x) (equal? idDoc (get_id_documento x)))(get_lista_documentos pDocs)))))
 
-; GET_CREADOR_DOC: Retorna el creador del documento mediante su id
-; Dominio: paradigma_docs (lista) idDoc (int)
+; GET_CREADOR_DOC_BYID: Retorna el creador del documento mediante su id
+; Dominio: paradigma_docs X int
 ; Recorrido: string
 (define (get_creadorDoc_byid pDocs idDoc)
   (if (null? (get_doc_byId pDocs idDoc))
       null
-  (cadr(get_doc_byId pDocs idDoc))))
+      (cadr(get_doc_byId pDocs idDoc))))
 
 ; GET_HISTORIAL_BYID: Retorna historial de versiones, mediante su id
-; Dominio: paradigma_docs (lista) idDoc (int)
+; Dominio: paradigma_docs X int
 ; Recorrido: lista
 (define (get_historialDoc_byid pDocs idDoc)
   (if (null? (get_doc_byId pDocs idDoc))
@@ -83,7 +87,7 @@
       (cadddr(get_doc_byId pDocs idDoc))))
 
 ; GET_COMPARTIDOS_DOC_BYID: Retorna la lista de los usuarios con los que se comparte el documento mediante su id
-; Dominio: paradigma_docs (lista) idDoc (int)
+; Dominio: paradigma_docs X int
 ; Recorrido: lista
 (define (get_compartidosDoc_byid pDocs idDoc)
   (if (null? (get_doc_byId pDocs idDoc))
@@ -91,24 +95,28 @@
       (car(cddddr(get_doc_byId pDocs idDoc)))))
 
 ; GET_ACTIVE_VERSION_BYID: Obtiene la version activa del documento (La primera en el historial)
-; Dominio: paradigma_docs (lista) idDoc (int)
+; Dominio: paradigma_docs X int
 ; Recorrido: lista
 (define (get_active_version_byid pDocs idDoc)
   (car (get_historialDoc_byid pDocs idDoc)))
 
 ; GET_CONTENIDO_ACTIVE_ACTIVE_VERSION: Retorna el "texto" o contenido de la version actual para su modificacion en posteriores versiones (Funcion ADD y Delete)
-; Dominio: paradigma_docs (lista) idDoc (int)
+; Dominio: paradigma_docs X int
 ; Recorrido: string
 (define (get_contenido_active_version pDocs idDoc)
   (caddr (get_active_version_byid pDocs idDoc)))
 
-; LENGTH ES EL ID :O
-
-(define (set_id_vr paradigmadocs idDoc)
-  (length(get_historialDoc_byid paradigmadocs idDoc)))
-
+; SET_ID_VR: Determina el id que le corresponde a un nuevo documento creado
+; Dominio: paradigmadocs
+; Recorrido: int
 (define(set_id_doc paradigmadocs)
   (length (get_lista_documentos paradigmadocs)))
+
+; SET_ID_VR: Determina el id que le corresponde a la nueva versión creda
+; Dominio: paradigma_docs X int
+; Recorrido: int
+(define (set_id_vr paradigmadocs idDoc)
+  (length (get_historialDoc_byid paradigmadocs idDoc)))
 
 ; DELETE Y ADD
 
@@ -116,11 +124,13 @@
 ; Dominio: paradigma_docs (lista) idDoc (int) newversion(lista) 
 ; Recorrido: lista (Documento actualizado)
 ; Importante: parametro new version
-; UTIL PARA DELETE y futuras funciones
+
 (define (set_version_to_doc pDocs idDoc new_version)
   (list (get_tituloDoc_byid pDocs idDoc) (get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (get_historialDoc_byid pDocs idDoc)) (get_compartidosDoc_byid pDocs idDoc)))
 
-; ANIADIR_VERSION: Añade una nueva version "activa" al paradigmadocs
+; SET_VERSION: Añade una nueva version "activa" al paradigmadocs
+; Dominio: paradigma_docs X int X lista(contenido)
+; Recorrido: lista (Documento actualizado)
 (define (set_version pDocs idDoc x)
   (set_documento pDocs (append (filter(lambda (x) (not(eqv? idDoc (get_id_documento x))))(get_lista_documentos pDocs))(list(set_version_to_doc pDocs idDoc x)))))
 
@@ -131,23 +141,30 @@
     (car par_share))
 
 ; GET_PERMISO_SHARE: Obtiene el tipo de permiso de la lista de accesos 
-; Dominio: lista access (user X permiso)
-; Recorrido: character
-  (define (get_permiso_share par_share)
+; Dominio: lista access -> (user X permiso)
+; Recorrido: char
+(define (get_permiso_share par_share)
     (cadr par_share))
-
-(define (users_with_all_access pDocs idDoc)
-; PERMISOS_ESCRITURA: Función que filtra solo los permisos que tienen "escritura" (#\w) (Incluido el usuario)
-; Dominio: lista accesos X ((user X permiso) (user X permiso ) . . . )
-; Recorrido: lista
-; Tipo de Recursividad: Recursividad Natural
-  (define (permisos_escritura lista)
+  (define (get_usernames lista)
     (if (empty? lista)
         null
-        (cons (get_usuario_share (car lista))(permisos_escritura (cdr lista)))))
-  (append (list (get_creadorDoc_byid pDocs idDoc))(permisos_escritura (filter (lambda (x) (eqv? #\w (get_permiso_share x))) (get_compartidosDoc_byid pDocs idDoc)))))
+        (cons (get_usuario_share (car lista))(get_usernames (cdr lista)))))
+
+; USERS_WITH_ALL_ACCESS: Función que obtiene una lista con los usuarios que tienen acceso de edicion
+; Dominio: paradigmadocs X int
+; Recorrido: lista
+(define (get_editor_users pDocs idDoc)
+  (append (list (get_creadorDoc_byid pDocs idDoc)) (get_usernames (filter (lambda (x) (eqv? #\w (get_permiso_share x))) (get_compartidosDoc_byid pDocs idDoc)))))
+
+; GET_EDITOR_AND_COMMENT_USERS: Función que obtiene los usuarios que tienen permiso de editar el documento
+; Dominio: paradigmadocs X int
+; Recorrido: lista
+(define (get_editor_and_comment_users pDocs idDoc)
+  (append (list (get_creadorDoc_byid pDocs idDoc))(get_usernames (filter (lambda (x) (or (eqv? #\c (get_permiso_share x))(eqv? #\w (get_permiso_share x)))) (get_compartidosDoc_byid pDocs idDoc)))))
 
 ; NUEVO_HISTORIAL: Crea un nuevo historial de la forma:
+; Dominio: paradigmadocs X int X lista
+; Recorrido: lista
 (define (nuevo_historial pDocs idDoc new_historial)
   (list (get_tituloDoc_byid pDocs idDoc) (get_creadorDoc_byid pDocs idDoc) idDoc new_historial (get_compartidosDoc_byid pDocs idDoc)))
 
@@ -162,31 +179,29 @@
         (cons (get_usuario_share(car lista_accesos))(recorrer_lista (cdr lista_accesos)))))
   (recorrer_lista (get_lista_compartidos documento)))
 
-; GET ID DOCUMENTOS ACCESO: Obtiene una lista de las versiones a las que el usuario tiene acceso (Creador o fue compartido)
-; Dominio: paradigma_docs(lista) X idDoc(int) user(string)
-; Recorrido: Lista
-; Tipo de Recursividad: Recursividad Natural (Funcion recorrer_lista)
-; DOCUMENTOS COMPARTIDOS: Función que obtiene una lista con los documentos que fueron compartidos al usuario, no importa que permiso
-; Obtiene una lista de documentos a los que el usuario tiene acceso, ya sea por que fue compartido o es el creado
+
 ; GET_DOCUMENTOS COMPARTIDOS: Obtiene los ids de todos los documentos a los que al usuario le fueron compartidos
+; Dominio: paradigmadocs X string(user)
+; Recorrido: lista
 (define (get_id_documentos_compartidos pDocs user )
     (map (lambda(x)(get_id_documento x)) (filter (lambda (x) (member user (get_users_with_access x))) (get_lista_documentos pDocs))))
 
-; GET_DOCUMENTOS AUTOR: Obtiene los ids de todos los documentos a los que el usuario ha creado
+; GET_DOCUMENTOS_CREADOS: Obtiene los ids de todos los documentos a los que el usuario ha creado
 ; Dominio: paradigmadocs(lista) x user (string)
 ; Recorrido: lista
 (define (get_id_documentos_creados pDocs user)
   (map (lambda(x)(get_id_documento x))(filter (lambda (x) (equal? user (get_autor x))) (get_lista_documentos pDocs))))
 
 ; GET_DOCUMENTOS_ACCESO: Función que combina las 2 funciones anteriores (Obtiene los ids  de todos los documentos a los que el usuario tiene acceso)
-; Dominio: paradigmadocs(lista) x user (string)
+; Dominio: paradigma_docs X int X string (usuario)
 ; Recorrido: lista
 (define (get_id_documentos_acceso pDocs user)
   (append (get_id_documentos_creados pDocs user)  ; Aquí obtiene los ids de los documentos que el usuario es creador
           (get_id_documentos_compartidos pDocs user))) ; Aquí obtiene los documentos de los que el usuario tiene acceso
 
-; GET OCURRENCIAS: Funcion que obtiene los documentos en donde se encontro el texto buscado de la forma
-; ejemplo: ( (1) (2) (...) ) )
+; GET OCURRENCIAS: Funcion que obtiene los documentos en donde se encontro el texto buscado de la forma: ( (1) (2) (...) ) )
+; Dominio: lista X paradigmadocs X string
+; Recorrido: lista
 ; Tipo de Recursividad: Recursividad Natural
 (define (get_id_ocurrencias lista_versiones paradigmadocs texto )
   (if (empty? lista_versiones)
@@ -208,12 +223,12 @@
     (define (encap lista lista_unicos)
       (if (null? lista)
           null
-          (if (member (get_permiso_share (car lista))(list #\w #\c #\r)) ; Solo si el permiso tiene la sintaxis correcta: (#\w or #\c or #\r)
+          (if (and (es_usuario? (get_usuario_share (car lista)))(member (get_permiso_share (car lista))(list #\w #\c #\r))) ; Solo si el permiso tiene la sintaxis correcta: (#\w or #\c or #\r)
               (if (list? (member (get_usuario_share (car lista)) lista_unicos)) 
                   (encap (cdr lista) lista_unicos)
                   (cons (car lista) (encap (cdr lista) (append (list(get_usuario_share(car lista))) lista_unicos))))
               (encap (cdr lista) lista_unicos))))
-    (encap (reverse lista) '()))
+    (encap (reverse lista) '())) ; Una lista vacia para comparar permisos
   (define (actualizar_permisos lista_arrastre lista_actual) ; actualizar permisos: Funcion recursiva que actualiza los nuevos y antiguos permisos, NO ELIMINA PERMISOS
     (define (lista_usuarios_compartidos lista)
       (if (empty? lista)
@@ -235,7 +250,6 @@
   (append (list(reverse(append (list permisos) (cdr (reverse(get_doc_byId pDocs idDoc))))))(filter (lambda (x) (not(equal? (get_id_documento x) idDoc)))(get_lista_documentos pDocs))))
 
 ; Funciones usadas para paradigmadocs->string:
-
 ; REGISTRADOS->STRING: Función que obtiene una versión 'string' de la lista de usuarios registrados en la plataforma paradigmadocs
 ; Dominio: paradigmadocs (lista)
 ; Recorrido: string
@@ -295,6 +309,3 @@
 ; Tipo de Recursión: implicita en funciones declarativas: map
 (define (set_styles styles)
   (string-join(map(lambda(x)(string-append "#/" x ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (lambda(x)(member x (list #\i #\b #\u)))styles))""))))))))
-
-
-
