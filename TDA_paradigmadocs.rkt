@@ -2,6 +2,8 @@
 ; TDA PARADIGMADOCS
 (provide (all-defined-out))
 
+; CONSTRUCTOR:
+
 (define (paradigmadocs name date encrypt decrypt)
   (define (crear_lista_registrados)
         null)
@@ -11,7 +13,8 @@
         null)
   (list name date encryptFn decryptFn (crear_lista_registrados) (crear_lista_logeados) (crear_lista_documentos)))
 
-; SELECTORES
+; SELECTORES:
+
 (define (get_nombre_plataforma pDocs)
   (first pDocs))
 
@@ -30,12 +33,12 @@
 (define (get_lista_logeados pDocs)
   (sixth pDocs))
 
-(define (get_lista_documentos pDocs)
+(define (get_documentos pDocs)
   (seventh pDocs))
 
 ; MODIFICADORES
 
-;MODIFICAR_DOCUMENTO: Funcion encargada de crear una versión de paradigmadocs con los cambios respectivos en el documento, las constantes son:
+; SET_DOCUMENTO: Funcion encargada de crear una versión de paradigmadocs con los cambios respectivos en el documento, las constantes son:
 ; nombre_plataforma, fecha_creación, function1, function2, lista_registrados, lista_logeados
 ; Dominio: lista paradigmadocs, Contenido (lista)
 ; Recorrido lista paradigmadocs
@@ -54,12 +57,4 @@
 ; Recorrido texto desencriptado (string)
 (define decryptFn (lambda (s) (list->string (reverse (string->list s)))))
 
-; ACCESS: Funcion que retorna una lista con los elementos ingresados (cdr) por una access list, (car) es la cabeza "access", es usada para almacenar los permisos a un documento
-; Dominio: char
-; Recorrido: Access list (cdr)
-(define (access . x ) x )
 
-; STYLES: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "styles", es usada para almacenar los estilos aplicados a un documento
-; Dominio: char
-; Recorrido: Access list (cdr)
-(define (styles . x ) x )
