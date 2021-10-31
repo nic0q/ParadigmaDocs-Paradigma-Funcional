@@ -4,11 +4,14 @@
 (require "TDA_paradigmadocs.rkt")
 (provide (all-defined-out))
 
-; CONSTRUCTOR DE ACCESOS:
+; CONSTRUCTOR
+
 ; ACCESS: Funcion que retorna una lista con los elementos ingresados (cdr) por una access list, (car) es la cabeza "access", es usada para almacenar los permisos a un documento
 ; Dominio: char
 ; Recorrido: Access list (cdr)
 (define (access . accesses ) accesses )
+
+; SELECTORES
 
 ; GET_USUARIO_SHARE: Obtiene el usuario de lista de accesos
 ; Dominio: lista access (user X permiso)
@@ -34,25 +37,25 @@
 ; Dominio: paradigmadocs X int
 ; Recorrido: lista
 (define (get_editor_users pDocs idDoc)
-  (append (list (get_creadorDoc_byid pDocs idDoc)) (get_usernames (filter (lambda (x) (eqv? #\w (get_permiso_share x))) (get_compartidosDoc_byid pDocs idDoc)))))
+  (append (list (get_creadorDoc_byid pDocs idDoc)) (get_usernames (filter (λ (x) (eqv? #\w (get_permiso_share x))) (get_compartidosDoc_byid pDocs idDoc)))))
 
 ; GET_EDITOR_AND_COMMENT_USERS: Función que obtiene los usuarios que tienen permiso de editar el documento
 ; Dominio: paradigmadocs X int
 ; Recorrido: lista
 (define (get_editor_and_comment_users pDocs idDoc)
-  (append (list (get_creadorDoc_byid pDocs idDoc))(get_usernames (filter (lambda (x) (or (eqv? #\c (get_permiso_share x))(eqv? #\w (get_permiso_share x)))) (get_compartidosDoc_byid pDocs idDoc)))))
+  (append (list (get_creadorDoc_byid pDocs idDoc))(get_usernames (filter (λ (x) (or (eqv? #\c (get_permiso_share x))(eqv? #\w (get_permiso_share x)))) (get_compartidosDoc_byid pDocs idDoc)))))
 
 ; GET_DOCUMENTOS COMPARTIDOS: Obtiene los ids de todos los documentos a los que al usuario le fueron compartidos
 ; Dominio: paradigmadocs X string(user)
 ; Recorrido: lista
 (define (get_id_documentos_compartidos pDocs user )
-    (map (lambda(x)(get_id_documento x)) (filter (lambda (x) (member user (get_users_with_access x))) (get_documentos pDocs))))
+    (map (λ(x)(get_id_documento x)) (filter (λ (x) (member user (get_users_with_access x))) (get_documentos pDocs))))
 
 ; GET_DOCUMENTOS_CREADOS: Obtiene los ids de todos los documentos a los que el usuario ha creado
 ; Dominio: paradigmadocs(lista) x user (string)
 ; Recorrido: lista
 (define (get_id_documentos_creados pDocs user)
-  (map (lambda(x)(get_id_documento x))(filter (lambda (x) (equal? user (get_autor x))) (get_documentos pDocs))))
+  (map (λ(x)(get_id_documento x))(filter (λ (x) (equal? user (get_autor x))) (get_documentos pDocs))))
 
 ; GET_DOCUMENTOS_ACCESO: Función que combina las 2 funciones anteriores (Obtiene los ids  de todos los documentos a los que el usuario tiene acceso)
 ; Dominio: paradigma_docs X int X string (usuario)
@@ -71,6 +74,8 @@
         null
         (cons (get_usuario_share(car lista_accesos))(recorrer_lista (cdr lista_accesos)))))
   (recorrer_lista (get_lista_accesos documento)))
+
+; OTRAS FUNCIONES
 
 ; FILTRA PERMISOS: Filtra permisos bajo tales condiciones, obtiene solamente el username de la lista de permisos, en este  caso de la version anterior a paradigmadocs
 ; 1) El usuario debe estar previamente registrado
@@ -102,10 +107,8 @@
             (actualizar_permisos (cdr lista_arrastre) (append (list(car lista_arrastre)) lista_actual))
             (actualizar_permisos (cdr lista_arrastre) lista_actual))))
   (if (null? permisos_antiguos) ; Si la lista de permisos esta vacia, solo filtra esa lista, sino aplica la funcion actualizar_permisos para actualizar los permisos de la lista antigua y la actual
-      (filter (lambda (x) (and (not(equal? (get_usuario_share x) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share x)))) (unicos_permisos permisos_actuales))
-      (filter (lambda (x) (and (not(equal? (get_usuario_share x) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share x)))) (actualizar_permisos permisos_antiguos (unicos_permisos permisos_actuales)))))
-
-; Revoke all accesses, eliminar los permisos
+      (filter (λ (x) (and (not(equal? (get_usuario_share x) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share x)))) (unicos_permisos permisos_actuales))
+      (filter (λ (x) (and (not(equal? (get_usuario_share x) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share x)))) (actualizar_permisos permisos_antiguos (unicos_permisos permisos_actuales)))))
 
 (define (eliminar_permisos documento)
   (if (not (null? (get_lista_accesos documento)))                          ; Si la lista de compartidos no es nula:
@@ -123,13 +126,7 @@
       [(eqv? pr #\w) "escritura"]
       [(eqv? pr #\c) "comentarios"]
       [(eqv? pr #\r) "lectura"]))
-  (string-join(map (lambda (user permiso)
+  (string-join(map (λ (user permiso)
                      (string-append"\n"user" ➞ permiso de "(access_name permiso)))
-                   (map (lambda (x) (get_usuario_share x))lista_accesses)
-                   (map (lambda (x) (get_permiso_share x))lista_accesses))))
-
-; Funciones usadas para paradigmadocs->string:
-
-
-
-
+                   (map (λ (x) (get_usuario_share x))lista_accesses)
+                   (map (λ (x) (get_permiso_share x))lista_accesses))))
