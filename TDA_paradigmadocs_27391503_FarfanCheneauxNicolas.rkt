@@ -2,7 +2,10 @@
 ; TDA PARADIGMADOCS
 (provide (all-defined-out))
 
+; Implementación del TDA paradigmadocs
+
 ; CONSTRUCTOR:
+
 ; PARADIGMADOCS
 ; Descripción: Función que recibe un nombre que se le pondra a la plataforma, una fecha y 2 funciones de encryptación y desencriptación
 ; Dominio: string X date X funcion1 X funcion2
@@ -68,7 +71,9 @@
 (define (get_documentos pDocs)
   (seventh pDocs))
 
-; MODIFICADORES
+; SET_CUENTA:  Función que crea una cuenta de la forma (user X pass X date)
+(define (set_cuenta user pass date)
+  (list user pass date))
 
 ; SET_DOCUMENTO: Funcion encargada de crear una versión de paradigmadocs con un nuevo documento, las constantes son:
 ; nombre_plataforma, fecha_creación, function1, function2, lista_registrados, lista_logeados
