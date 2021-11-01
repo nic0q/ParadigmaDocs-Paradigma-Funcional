@@ -1,7 +1,8 @@
 #lang racket
+(require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_Docs_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_User_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
+
 (provide (all-defined-out))
 
 ; Implementación del TDA Access
@@ -14,6 +15,10 @@
 (define (access . accesses ) accesses )
 
 ; SELECTORES
+; GET_ACCESSES: Función que separa 'head' (access) de la lista de permisos 'tail' (accesses)
+
+(define (get_accesses accesslist)
+  (car accesslist))
 
 ; GET_USUARIO_SHARE: Obtiene el usuario de lista de accesos
 ; Dominio: lista access (user X permiso)

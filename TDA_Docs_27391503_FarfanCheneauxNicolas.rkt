@@ -1,10 +1,23 @@
 #lang racket
 (require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_User_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_fecha_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_User_27391503_FarfanCheneauxNicolas.rkt")
+
 (provide (all-defined-out))
 
 ; Implementación del TDA Docs
+
+; Constructor
+; DOCUMENTO: Crea un documento de la forma (title X creador X id X historial X shares)
+(define (documento title creador idDoc historial shares)
+  (list title creador idDoc historial shares))
+
+; VERSION: Crea una version de historial de la forma (id X date X content)
+(define (version idVr date content)
+  (list idVr date content))
+; NUEVO_DOCUMENTO: Añaade un documento a los documentos creados en paradigmadocs
+(define (nuevo_documento pDocs date title contenido creador)
+    (set_documento pDocs (append (list(documento title creador (set_id_doc pDocs) (list (version 0 date contenido))null))(get_documentos pDocs))))
 
 ; PERTENENCIA:
 
@@ -82,7 +95,7 @@
 (define (get_texto_version version)
   (caddr version))
 
-; GETTERS del documento mediante su id
+; GETTERS/SETTERS del documento mediante su id
 
 ; GET_DOC_BYID: Obtiene el documento completo mediante su id
 ; Dominio: paradigma_docs X int
@@ -124,17 +137,21 @@
       null
       (car(cddddr(get_doc_byId pDocs idDoc)))))
 
-; GET_N_VERSIONS: Funcion que retorna el numero de versiones creadas
+; GET_N_VERSIONS: Funcion que retorna el numero de versiones creadas en un documento mediante su id
+; Dominio: paradigmadocs X int
+; Recorrido: int
 (define (get_n_versions pDocs idDoc)
   (length(get_historialDoc_byid pDocs idDoc)))
 
 ; GET_ACTIVE_VERSION_BYID: Obtiene la version activa del documento (La primera en el historial)
-; Dominio: paradigma_docs X int
+; Dominio: paradigmadocs X int
 ; Recorrido: lista
 (define (get_active_version_byid pDocs idDoc)
   (car (get_historialDoc_byid pDocs idDoc)))
 
 ; GET_SEGUNDA_VERSION: Obtien la anterior versión a la activa
+; Dominio: paradigmadocs X int
+; Recorrido: lista
 (define (get_segunda_version_byid pDocs idDoc)
   (cadr (get_historialDoc_byid pDocs idDoc)))
 
