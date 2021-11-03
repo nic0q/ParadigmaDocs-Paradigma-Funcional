@@ -1,10 +1,11 @@
 #lang racket
 (require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_Memoria_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_Version_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_Access_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_fecha_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_User_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_Docs_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_Doc_27391503_FarfanCheneauxNicolas.rkt")
 
 ; REGISTER
 ; Descripción: Funcion que mediante una composición de funciones permite registrar un grupo de usuarios únicos mediante la fecha username y
@@ -14,7 +15,7 @@
 ; Tipo de Recursividad: Recursión Natural (función registrar_usuario)
 (define (register paradigmadocs date username password)
   (define (aniadir_usuario_registrado paradigmadocs user pass date) ;(modificar_documento pDocs contenido) ; (registrar (get_lista_registrados paradigmadocs) (list(list user pass date))
-    (list (get_nombre_plataforma paradigmadocs)(get_fecha_creacion_plataforma paradigmadocs)(get_function1 paradigmadocs)(get_function2 paradigmadocs) (registrar_usuario (get_lista_registrados paradigmadocs) (set_cuenta user pass date)) (get_lista_logeados paradigmadocs) (get_documentos paradigmadocs)))
+    (list (get_nombre_plataforma paradigmadocs)(get_fecha_creacion_plataforma paradigmadocs)(get_function1 paradigmadocs)(get_function2 paradigmadocs) (registrar_usuario (get_lista_registrados paradigmadocs) (usuario user pass date)) (get_lista_logeados paradigmadocs) (get_documentos paradigmadocs)))
     (if (and (es_usuario? username)(es_password? password)(date? date)(not(registrado_antes? paradigmadocs username)))
         (aniadir_usuario_registrado paradigmadocs username ((get_function1 paradigmadocs) password) date)
         paradigmadocs))
@@ -47,10 +48,18 @@
 ; Dominio: paradigmadocs X date X string X string
 ; Recorrido: paradigmadocs
 ; Tipo de Recursividad: funciones declarativas en set_documento
+
+; Función Encapsulada:
+ ; PRIMER_DOCUMENTO: Añade un nuevo documento, con una primera versión
+ ; Dominio: paradigmadocs X date X string X string X string
+ ; Recorrido: paradigmadocs
+
 (define (create paradigmadocs date nombre contenido)
+  (define (primer_documento pDocs date title contenido creador)
+    (set_documento pDocs (append (list(documento title creador (set_id_doc pDocs) (list (version 0 date contenido))null))(get_documentos pDocs))))
   (if (logeado? paradigmadocs)
       (if (and (date? date)(es_nombre? nombre)(es_texto? contenido))
-          (deslogear (nuevo_documento paradigmadocs date nombre ((get_function1 paradigmadocs) contenido) (get_logeado paradigmadocs)))
+          (deslogear (primer_documento paradigmadocs date nombre ((get_function1 paradigmadocs) contenido) (get_logeado paradigmadocs)))
           (deslogear paradigmadocs))
       paradigmadocs))
 
@@ -78,13 +87,11 @@
 ; Recorrido: paradigmadocs
 ; Tipo de Recursividad: Recursividad (Funciones declarativas en get_editor_users, set_version)
 (define (add paradigmadocs idDoc date contenidoTexto)
-  (define (add_texto_nueva_vr paradigmadocs idDoc date texto)
-    (version (set_id_vr paradigmadocs idDoc)date ((get_function1 paradigmadocs) (string-join (list(decryptFn(get_contenido_active_version paradigmadocs idDoc)) texto)))))
-      (if (logeado? paradigmadocs)
-          (if (and (es_id? idDoc)(es_texto? contenidoTexto)(date? date)(member (get_logeado paradigmadocs) (get_editor_users paradigmadocs idDoc)))
-              (deslogear (set_version paradigmadocs idDoc (add_texto_nueva_vr paradigmadocs idDoc date contenidoTexto)))
-              (deslogear paradigmadocs))
-          paradigmadocs))
+  (if (logeado? paradigmadocs)
+      (if (and (es_id? idDoc)(es_texto? contenidoTexto)(date? date)(member (get_logeado paradigmadocs) (get_editor_users paradigmadocs idDoc)))
+          (deslogear (set_version paradigmadocs idDoc  (version (set_id_vr paradigmadocs idDoc)date ((get_function1 paradigmadocs) (string-join(list(decryptFn(get_contenido_active_version paradigmadocs idDoc)) contenidoTexto))))))
+          (deslogear paradigmadocs))
+      paradigmadocs))
 
 ; RESTORE VERSION
 ; Descripción: Función que 'restaura' un versión, es decir que la versión escogida pasa a ser la versión activa en el documento, si la versión no existe se retorna p.docs sin
@@ -98,9 +105,9 @@
   (if (logeado? paradigmadocs)
       (if (and (es_id? idDoc)(es_id? idVersion)(eqv? (get_logeado paradigmadocs)(get_creadorDoc_byid paradigmadocs idDoc)))
           (deslogear (set_documento paradigmadocs (append (list (list (get_tituloDoc_byid paradigmadocs idDoc) (get_creadorDoc_byid paradigmadocs idDoc) idDoc
-                                                                      (append (filter (λ (x) (eqv? idVersion (get_id_version x))) (get_historialDoc_byid paradigmadocs idDoc))
-                                                                              (filter (λ (x) (not(eqv? idVersion (get_id_version x)))) (get_historialDoc_byid paradigmadocs idDoc))) (get_compartidosDoc_byid paradigmadocs idDoc)))
-                                                          (filter (λ (x)(not(eqv? idDoc (get_id_documento x))))(get_documentos paradigmadocs)))))
+                                                                      (append (filter (λ (version) (eqv? idVersion (get_id_version version))) (get_historialDoc_byid paradigmadocs idDoc))
+                                                                              (filter (λ (version) (not(eqv? idVersion (get_id_version version)))) (get_historialDoc_byid paradigmadocs idDoc))) (get_compartidosDoc_byid paradigmadocs idDoc)))
+                                                          (filter (λ (documento)(not(eqv? idDoc (get_id_documento documento))))(get_documentos paradigmadocs)))))
           (deslogear paradigmadocs))
       paradigmadocs))
 
@@ -113,7 +120,7 @@
   (if (logeado? paradigmadocs)                     
       (if (empty? (filter (λ (documento) (eqv? (get_logeado paradigmadocs) (get_autor documento))) (get_documentos paradigmadocs)))
           (deslogear paradigmadocs )
-          (deslogear(set_documento paradigmadocs (append (filter (λ (documento) (not(eqv? (get_logeado paradigmadocs) (get_autor documento)))) (get_documentos paradigmadocs)) 
+          (deslogear(set_documento paradigmadocs(append(filter (λ (documento) (not(eqv? (get_logeado paradigmadocs) (get_autor documento)))) (get_documentos paradigmadocs)) 
                                                          (map eliminar_permisos (filter (λ (documento) (eqv? (get_logeado paradigmadocs) (get_autor documento))) (get_documentos paradigmadocs)))))))
       paradigmadocs))
 
@@ -126,7 +133,7 @@
 (define (search paradigmadocs searchText)
   (if (and (logeado? paradigmadocs)(es_texto? searchText))
       (map (λ (id) (get_doc_byId paradigmadocs id))
-           (filter (λ (id) (not(null? id))) (get_id_ocurrencias (get_id_documentos_acceso paradigmadocs (get_logeado paradigmadocs)) paradigmadocs ((get_function2 searchText)))))
+           (filter (λ (id) (not(null? id))) (get_id_ocurrencias (get_id_documentos_acceso paradigmadocs (get_logeado paradigmadocs)) paradigmadocs ((get_function2 paradigmadocs)searchText))))
       null))
 
 ; PARADIGMADOCS->STRING
@@ -136,18 +143,56 @@
 ; Recorrido: string
 ; Tipo de Recursividad: Solo funciones de forma declarativa (map) en documentos->string, registrados->string, accesses->string, historial->string
 
-; Función encapsulada:
- ; DOCUMENTOS->STRING
- ; Descripción: Función encapsulada  que obtiene una versión 'string' de toda la información de los documentos de paradigmadocs, esta funcion recibe datos de
+; Funciones encapsulada:
+
+ ; REGISTRADOS->STRING: Función que obtiene una versión 'string' de la lista de usuarios registrados en la plataforma paradigmadocs
+ ; Dominio: paradigmadocs (lista)
+ ; Recorrido: string
+ ; Tipo de Recursión: Solo funciones declarativas
+
+ ; DOCUMENTOS->STRING: Función que obtiene una versión 'string' de toda la información de los documentos de paradigmadocs, esta funcion recibe datos de
  ; las funciones accesses->string, historial->string (TDA DOCUMENTOS)
  ; Componentes Documentos: NombreDoc, Autor, id, versión activa, historial, Usuarios con acceso
  ; Dominio: lista
  ; Recorrido: string
+
+ ; HISTORIAL->STRING: Función que convierte el historial en una versión string
+ ; Dominio: lista
+ ; Recorrido: string
+ ; Tipo de Recursión: Solo funciones declarativas
+
+ ; ACCESSES->STRING: Función que convierte a string los accessos que tienen los usuarios al documento,
+ ; además la función encapsulada access_name convierte a string el char, entendible por el usuario
+ ; Dominio: access list (lista_accesses)
+ ; Recorrido: string
+ ; Tipo de Recursión: Solo funciones declarativas
 (define (paradigmadocs->string paradigmadocs)
+  (define (registrados->string pDocs)
+    (string-join(map (λ (username pass date)
+      (string-append "\nUsuario: "username"\nContraseña: "pass"\nRegistrado el "(date->string date)"\n"(make-string 35 #\-)))
+                     (map (λ (x) (get_username x)) (get_lista_registrados pDocs))
+                     (map (λ (x) (get_password x)) (get_lista_registrados pDocs))
+                     (map (λ (x) (get_fecha_creacion x)) (get_lista_registrados pDocs)))))
+  (define (historial->string historial_doc)
+  (string-join(map (λ (idVer date texto)
+                     (string-append "\n\t" "Versión n° "(number->string idVer)"\n\tUltima Modificación el "(date->string date)"\n\tContenido: "(decryptFn texto)"\n\t* * * * * * * * * * * *"))
+                   (map (λ (x) (get_id_version x)) historial_doc)
+                   (map (λ (x) (get_date_version x))historial_doc)
+                   (map (λ (x) (get_texto_version x))historial_doc))))
+  (define (accesses->string lista_accesses)
+    (define (access_name pr)
+      (cond 
+        [(eqv? pr #\w) "escritura"]
+        [(eqv? pr #\c) "comentarios"]
+        [(eqv? pr #\r) "lectura"]))
+    (string-join(map (λ (user permiso)
+                       (string-append"\n"user" ➞ permiso de "(access_name permiso)))
+                     (map (λ (x) (get_usuario_share x))lista_accesses)
+                     (map (λ (x) (get_permiso_share x))lista_accesses))))
   (define (documentos->string lista_documentos)
   (string-join(map (λ (nombre_doc creador id historial shares)
                      (string-append "\n"nombre_doc" creado por "creador"\nid: "(number->string id)"\nHistorial de Documentos:\n\t* * Versión Activa * *" (historial->string historial)
-                                    "\nUsuarios con acceso:"(accesses->string (filter (λ (x)(not(null? x)))shares))"\n"))
+                                    "\nUsuarios con acceso:"(accesses->string (filter (λ (access)(not(null? access)))shares))"\n"))
                    (map (λ (x) (get_nombre_documento x))lista_documentos)
                    (map (λ (x) (get_autor x))lista_documentos)
                    (map (λ (x) (get_id_documento x)) lista_documentos)
@@ -158,6 +203,7 @@
     (documentos->string (map (λ(x)(get_doc_byId paradigmadocs x)) (get_id_documentos_creados paradigmadocs (get_logeado paradigmadocs))))"\n"(make-string 15 #\-) "\nTiene acceso a: " (documentos->string (map (λ(x)(get_doc_byId paradigmadocs x)) (get_id_documentos_compartidos paradigmadocs (get_logeado paradigmadocs)))))
       (string-append (make-string 15 #\*)" "(get_nombre_plataforma paradigmadocs)" "(make-string 15 #\*)"\nCreado el "(date->string (get_fecha_creacion_plataforma paradigmadocs))
                  "\n\n➤USUARIOS REGISTRADOS:"(registrados->string paradigmadocs)"\n\n➤DOCUMENTOS:"(documentos->string (get_documentos paradigmadocs)))))
+
 ; DELETE
 ; Descripción: Función que permite eliminar los 'n' ultimos caracteres de la versión actual del documento, solo los usuarios con permiso de edición pueden usar esta función,
 ; si el número de caracteres a borrar es superior al largo del texto se elimina todo, quedando  "", nueva_ver:Funcion propia (encapsulada) de la Funcion DELETE que elimina texto del final
@@ -183,7 +229,7 @@
   (if (logeado? paradigmadocs)
       (if (and (member (get_logeado paradigmadocs)(get_editor_users paradigmadocs idDoc))(not(eqv? searchText replaceText))(es_id? idDoc)(date? date)(es_texto? searchText)(es_texto? replaceText))
           (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText)) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText) ((get_function2 paradigmadocs)replaceText)))))
+              (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc)((get_function2 paradigmadocs)searchText)((get_function2 paradigmadocs)replaceText)))))
               (deslogear paradigmadocs))
           (deslogear paradigmadocs))
       paradigmadocs))
@@ -193,7 +239,14 @@
 ; Dominio: paradigmadocs X int X date X String X accessList
 ; Recorrido: paradigmadocs
 ; Tipo de Recursión: funciones declarativas (get_editor_users, set_version)
+; Función encapsulada:
+ ; SET_STYLES: Función que crea un string con los estilos para agregarlo al documento, ademas se filtra la acceslist style para que los estilos solo sean italic, bold, underlined(#\i #\b #\u)
+ ; Dominio: access list (styles)
+ ; Recorrido: string
+ ; Tipo de Recursión: implicita en funciones declarativas: filter
 (define (applyStyles paradigmadocs idDoc date searchText . styles)
+  (define (set_styles styles)
+    (string-join(map(λ(x)(string-append "#\\" x ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (λ(x)(member x (list #\i #\b #\u)))styles))""))))))))
   (if (logeado? paradigmadocs)
       (if (and (es_id? idDoc)(not(eqv? searchText ""))(date? date)(es_texto? searchText)(member (get_logeado paradigmadocs )(get_editor_users paradigmadocs idDoc)))
           (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText)) ; Si encuentra texto

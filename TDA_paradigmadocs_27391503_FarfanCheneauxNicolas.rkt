@@ -4,7 +4,7 @@
 
 ; Implementación del TDA paradigmadocs
 
-; CONSTRUCTOR:
+; CONSTRUCTOREs
 
 ; PARADIGMADOCS
 ; Descripción: Función que recibe un nombre que se le pondra a la plataforma, una fecha y 2 funciones de encryptación y desencriptación
@@ -27,7 +27,7 @@
 ; Recorrido: Access list (cdr) . . .
 (define (styles . x ) x )
 
-; SELECTORES:
+; SELECTORES
 
 ; GET_NOMBRE_PLATAFORMA: Función que retorna el nombre de la plataforma paradigmadocs
 ; Dominio: paradigmadocs
@@ -70,10 +70,6 @@
 ; Recorrido: lista
 (define (get_documentos pDocs)
   (seventh pDocs))
-
-; SET_CUENTA:  Función que crea una cuenta de la forma (user X pass X date)
-(define (set_cuenta user pass date)
-  (list user pass date))
 
 ; SET_DOCUMENTO: Funcion encargada de crear una versión de paradigmadocs con un nuevo documento, las constantes son:
 ; nombre_plataforma, fecha_creación, function1, function2, lista_registrados, lista_logeados

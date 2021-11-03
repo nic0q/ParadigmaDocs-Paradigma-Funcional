@@ -1,8 +1,7 @@
 #lang racket
 (require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_Docs_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_Doc_27391503_FarfanCheneauxNicolas.rkt")
 (require "TDA_User_27391503_FarfanCheneauxNicolas.rkt")
-
 (provide (all-defined-out))
 
 ; Implementación del TDA Access
@@ -15,8 +14,10 @@
 (define (access . accesses ) accesses )
 
 ; SELECTORES
-; GET_ACCESSES: Función que separa 'head' (access) de la lista de permisos 'tail' (accesses)
 
+; GET_ACCESSES: Función que separa 'head' (access) de la lista de permisos 'tail' (accesses)
+; Dominio: lista access (user X permiso)
+; Recorrido: list
 (define (get_accesses accesslist)
   (car accesslist))
 
@@ -128,19 +129,3 @@
   (if (not (null? (get_lista_accesos documento)))                          ; Si la lista de compartidos no es nula:
       (append (remove (get_lista_accesos documento)documento) (list null)) ; Se agrega reemplaza por una lista vacía
       documento))                                                          ; Si no solo devuelve el documento
-
-; ACCESSES->STRING: Función que convierte a string los accessos que tienen los usuarios al documento,
-; además la función encapsulada access_name convierte a string el char, entendible por el usuario
-; Dominio: access list (lista_accesses)
-; Recorrido: string
-; Tipo de Recursión: Solo funciones declarativas
-(define (accesses->string lista_accesses)
-  (define (access_name pr)
-    (cond 
-      [(eqv? pr #\w) "escritura"]
-      [(eqv? pr #\c) "comentarios"]
-      [(eqv? pr #\r) "lectura"]))
-  (string-join(map (λ (user permiso)
-                     (string-append"\n"user" ➞ permiso de "(access_name permiso)))
-                   (map (λ (x) (get_usuario_share x))lista_accesses)
-                   (map (λ (x) (get_permiso_share x))lista_accesses))))

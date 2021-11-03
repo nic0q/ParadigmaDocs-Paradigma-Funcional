@@ -1,8 +1,6 @@
 #lang racket
-(require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_fecha_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_Docs_27391503_FarfanCheneauxNicolas.rkt")
-
+(require "TDA_Doc_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_Version_27391503_FarfanCheneauxNicolas.rkt")
 (provide (all-defined-out))
 
 ; Implementación del TDA Memoria

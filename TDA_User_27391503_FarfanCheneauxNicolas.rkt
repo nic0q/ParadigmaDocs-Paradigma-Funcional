@@ -4,9 +4,17 @@
 
 ; Implementación del TDA User
 
+; CONSTRUCTOR:
+
+; USUARIO: Función que construye un usuario de la forma (username X pass X date)
+; Dominio: username X pass X date
+; Recorrido: lista
+(define (usuario username pass date)
+  (list username pass date))
+
 ; PERTENENCIA:
 
-; ES_USUARIO?
+; ES_USUARIO?: Funcion que comprueba si el username es válido
 ; Dominio: x
 ; Recorrido: boolean
 (define (es_usuario? user)
@@ -18,8 +26,8 @@
 (define (es_password? password)
   (string? password))
 
-; REGISTRADO_ANTES?: Retorna un dato booleano segun, el usurio esta registrado o no
-; Dominio: paradigma_docs (lista), string
+; REGISTRADO_ANTES?: Función que retorna un dato booleano segun, el usurio esta registrado o no (El username coincide)
+; Dominio: paradigmadocs X string
 ; Recorrido: boolean
 ; Tipo de Recursividad: Recursividad de Cola
 (define (registrado_antes? pDocs user)
@@ -31,11 +39,10 @@
             (recorrer_lista (cdr lista_registrados)))))
 (recorrer_lista (get_lista_registrados pDocs)))
 
-; TIENE_CUENTA?: Retorna un tipo de dato booleano si las credenciales son correctas a las registradas en paradigmadocs (username y password)
+; TIENE_CUENTA?: Función que retorna un tipo de dato booleano si las credenciales del usuario son correctas a las registradas en paradigmadocs (username y password)
 ; Dominio paradigma_docs (lista), string, string
 ; Recorrido: boolean
-; Tipo de Recursividad: Recursividad Natural
-; NOTA: La funcion recorrer lista registrados solo puede ser usada internamente por login
+; Tipo de Recursividad: Recursividad de Cola
 (define (tiene_cuenta? pDocs user pass)
   (define (recorrer_lista_registrados lista_registrados)
   (if (empty? lista_registrados)
@@ -45,7 +52,7 @@
           (recorrer_lista_registrados (cdr lista_registrados)))))
   (recorrer_lista_registrados (get_lista_registrados pDocs)))
 
-; LOGEADO?: Función que retorna un tipo de dato booleano si el usuario se ha logeado previamente
+; LOGEADO?: Función que retorna un tipo de dato booleano si el usuario se ha logeado previamente en paradigmadocs
 ; Dominio: paradigma_docs X user
 ; Recorrido: booleano (#t o #f)
 (define (logeado? pDocs)
@@ -66,7 +73,7 @@
 (define (get_username cuenta)
   (car cuenta))
 
-; GET_PASSWORD_CUENTA: Función que obtiene el username de una cuenta creada 
+; GET_PASSWORD_CUENTA: Función que obtiene el password de una cuenta creada 
 ; Dominio: lista (user X password X date)
 ; Recorrido: password (string)
 (define (get_password cuenta)
@@ -74,7 +81,7 @@
 
 ; GET_FECHA_CREACION: Función que obtiene la fecha de creación de cuenta del usuario
 ; Dominio: lista (user X password X date)
-; Recorrido: date (lista)
+; Recorrido: date
 (define (get_fecha_creacion cuenta)
   (caddr cuenta))
 
@@ -84,14 +91,14 @@
 (define (get_fecha_creacion_cuenta pDocs user)
   (get_fecha_creacion (get_cuenta pDocs user)))
 
-; GET_PASSWORD: Obtiene la contraseña desencriptada de la lista del usuario
+; GET_PASSWORD_DESENCRYPT: Obtiene la contraseña desencriptada de la lista del usuario
 ; Dominio: lista (user X password X date)
 ; Recorrido: string
-(define (get_password_desencrypt lista_usuario)
- (decryptFn (second lista_usuario)))
+(define (get_password_desencrypt usuario)
+ (decryptFn (get_password usuario)))
 
 ; GET_LOGEADO: Función que retorna al unico usuario logeado en paradigmadocs
-; Dominio: lista
+; Dominio: paradigmadocs
 ; Recorrido: string
 (define (get_logeado pDocs)
   (car (get_lista_logeados pDocs)))
@@ -105,7 +112,7 @@
 (define (registrar_usuario lista n)
   (if (empty? lista)
       (cons n null)
-      (cons (car lista) (registrar_usuario (cdr lista )n))))
+      (cons (car lista) (registrar_usuario (cdr lista)n))))
 
 ; LOGEAR: Funcion que añade al usuario a la lista de activos cuando se usa la funcion login
 ; Dominio: paradigmadocs X user X pass 
