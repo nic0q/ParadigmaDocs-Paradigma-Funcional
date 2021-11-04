@@ -1,6 +1,6 @@
 #lang racket
-(require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
-(require "TDA_Doc_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_paradigmadocs_27391503_FarfanCheneaux.rkt")
+(require "TDA_Doc_27391503_FarfanCheneaux.rkt")
 (provide (all-defined-out))
 
 ; VERSION: Crea una version de historial de la forma (id X date X content)

@@ -1,5 +1,5 @@
 #lang racket
-(require "TDA_paradigmadocs_27391503_FarfanCheneauxNicolas.rkt")
+(require "TDA_paradigmadocs_27391503_FarfanCheneaux.rkt")
 (provide (all-defined-out))
 
 ; Implementación del TDA User
