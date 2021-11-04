@@ -71,6 +71,10 @@
 (define (get_n_versions pDocs idDoc)
   (length(get_historialDoc_byid pDocs idDoc)))
 
+; GET_PRIMERA_VERSION: Función que retorna la primera versión creada en el documento
+(define (get_primera_version pDocs idDoc)
+  (car(filter (lambda(version)(eqv? 0 (get_id_version version)))(get_historialDoc_byid pDocs idDoc))))
+
 ; SET_ID_VR: Determina el id que le corresponde a la nueva versión creda
 ; Dominio: paradigma_docs X int
 ; Recorrido: int

@@ -45,25 +45,25 @@
 ; Dominio: paradigmadocs X int
 ; Recorrido: lista
 (define (get_editor_users pDocs idDoc)
-  (append (list (get_creadorDoc_byid pDocs idDoc)) (get_usernames (filter (λ (x) (eqv? #\w (get_permiso_share x))) (get_compartidosDoc_byid pDocs idDoc)))))
+  (append (list (get_creadorDoc_byid pDocs idDoc)) (get_usernames (filter (λ (permiso) (eqv? #\w (get_permiso_share permiso))) (get_compartidosDoc_byid pDocs idDoc)))))
 
 ; GET_EDITOR_AND_COMMENT_USERS: Función que obtiene los usuarios que tienen permiso de editar el documento
 ; Dominio: paradigmadocs X int
 ; Recorrido: lista
 (define (get_editor_and_comment_users pDocs idDoc)
-  (append (list (get_creadorDoc_byid pDocs idDoc))(get_usernames (filter (λ (x) (or (eqv? #\c (get_permiso_share x))(eqv? #\w (get_permiso_share x)))) (get_compartidosDoc_byid pDocs idDoc)))))
+  (append (list (get_creadorDoc_byid pDocs idDoc))(get_usernames (filter (λ (permiso) (or (eqv? #\c (get_permiso_share permiso))(eqv? #\w (get_permiso_share permiso)))) (get_compartidosDoc_byid pDocs idDoc)))))
 
 ; GET_DOCUMENTOS COMPARTIDOS: Obtiene los ids de todos los documentos a los que al usuario le fueron compartidos
 ; Dominio: paradigmadocs X string(user)
 ; Recorrido: lista
 (define (get_id_documentos_compartidos pDocs user )
-    (map (λ(x)(get_id_documento x)) (filter (λ (x) (member user (get_users_with_access x))) (get_documentos pDocs))))
+    (map (λ(documento)(get_id_documento documento)) (filter (λ (documento) (member user (get_users_with_access documento))) (get_documentos pDocs))))
 
 ; GET_DOCUMENTOS_CREADOS: Obtiene los ids de todos los documentos a los que el usuario ha creado
 ; Dominio: paradigmadocs(lista) x user (string)
 ; Recorrido: lista
 (define (get_id_documentos_creados pDocs user)
-  (map (λ(x)(get_id_documento x))(filter (λ (x) (equal? user (get_autor x))) (get_documentos pDocs))))
+  (map (λ(documento)(get_id_documento documento))(filter (λ (documento) (equal? user (get_autor documento))) (get_documentos pDocs))))
 
 ; GET_DOCUMENTOS_ACCESO: Función que combina las 2 funciones anteriores (Obtiene los ids  de todos los documentos a los que el usuario tiene acceso)
 ; Dominio: paradigma_docs X int X string (usuario)
@@ -88,7 +88,7 @@
 ; Recorrido: lista_permisos (lista)
 ; Tipo de Recursión: implicita en funciones declarativas: filter
 (define (set_permisos pDocs idDoc permisos)
-  (append (list(reverse(append (list permisos) (cdr (reverse(get_doc_byId pDocs idDoc))))))(filter (λ (x) (not(equal? (get_id_documento x) idDoc)))(get_documentos pDocs))))
+  (append (list(reverse(append (list permisos) (cdr (reverse(get_doc_byId pDocs idDoc))))))(filter (λ (documento) (not(equal? (get_id_documento documento) idDoc)))(get_documentos pDocs))))
 
 ; OTRAS FUNCIONES
 
@@ -99,7 +99,7 @@
 ; , si se crea uno nuevo en la lista actual, se añade automaticamente
 ; Dominio: paradigma_docs (lista) idDoc (int)
 ; Recorrido: access list (X user X permiso) ...
-; Tipo de Recursividad: Recursividad Natural, funcion unicos permisos
+; Tipo de Recursividad: Recursividad Natural, funcion unicos permisos y en funciones declarativas
 (define (filtrar_permisos permisos_antiguos permisos_actuales pDocs idDoc)
   (define (unicos_permisos lista) ; unicos permisos: Funcion que filtra los permisos duplicados ingresados por el usuario
     (define (encap lista lista_unicos)
@@ -122,9 +122,12 @@
             (actualizar_permisos (cdr lista_arrastre) (append (list(car lista_arrastre)) lista_actual))
             (actualizar_permisos (cdr lista_arrastre) lista_actual))))
   (if (null? permisos_antiguos) ; Si la lista de permisos esta vacia, solo filtra esa lista, sino aplica la funcion actualizar_permisos para actualizar los permisos de la lista antigua y la actual
-      (filter (λ (x) (and (not(equal? (get_usuario_share x) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share x)))) (unicos_permisos permisos_actuales))
-      (filter (λ (x) (and (not(equal? (get_usuario_share x) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share x)))) (actualizar_permisos permisos_antiguos (unicos_permisos permisos_actuales)))))
+      (filter (λ (permiso) (and (not(equal? (get_usuario_share permiso) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share permiso)))) (unicos_permisos permisos_actuales))
+      (filter (λ (permiso) (and (not(equal? (get_usuario_share permiso) (get_creadorDoc_byid pDocs idDoc)))(registrado_antes? pDocs (get_usuario_share permiso)))) (actualizar_permisos permisos_antiguos (unicos_permisos permisos_actuales)))))
 
+; ELIMINAR_PERMISOS: Función que elimina los permisos de un documento, dejando una lista vacia
+; Dominio: lista
+; Recorrido: lista
 (define (eliminar_permisos documento)
   (if (not (null? (get_lista_accesos documento)))                          ; Si la lista de compartidos no es nula:
       (append (remove (get_lista_accesos documento)documento) (list null)) ; Se agrega reemplaza por una lista vacía
