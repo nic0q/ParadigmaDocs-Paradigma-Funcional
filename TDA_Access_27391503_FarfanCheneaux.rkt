@@ -6,20 +6,22 @@
 
 ; Implementación del TDA Access
 
-; CONSTRUCTOR
+; CONTRUSTOR DE ACCESOS
 
 ; ACCESS: Funcion que retorna una lista con los elementos ingresados (cdr) por una access list, (car) es la cabeza "access", es usada para almacenar los permisos a un documento
 ; Dominio: char
 ; Recorrido: Access list (cdr)
 (define (access . accesses ) accesses )
 
-; SELECTORES
+; CONTRUSTOR DE ESTILOS
 
-; GET_ACCESSES: Función que separa 'head' (access) de la lista de permisos 'tail' (accesses)
-; Dominio: lista access (user X permiso)
-; Recorrido: list
-(define (get_accesses accesslist)
-  (car accesslist))
+; STYLES
+; Descripción: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "styles", es usada para almacenar los estilos aplicados a un documento
+; Dominio: char . . .
+; Recorrido: Access list (cdr) . . .
+(define (styles . x ) x )
+
+; SELECTORES
 
 ; GET_USUARIO_SHARE: Obtiene el usuario de lista de accesos
 ; Dominio: lista access (user X permiso)

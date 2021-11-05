@@ -13,11 +13,10 @@
 ; Dominio: Archivo de tipo paradigma_docs, una fecha (date), username (string), password (string)
 ; Recorrido: Versión actualizada de paradigma docs, con los usuarios con username únicos registrados
 ; Tipo de Recursividad: Recursión Natural (función registrar_usuario)
+
 (define (register paradigmadocs date username password)
-  (define (aniadir_usuario_registrado paradigmadocs user pass date) ;(modificar_documento pDocs contenido) ; (registrar (get_lista_registrados paradigmadocs) (list(list user pass date))
-    (list (get_nombre_plataforma paradigmadocs)(get_fecha_creacion_plataforma paradigmadocs)(get_function1 paradigmadocs)(get_function2 paradigmadocs) (registrar_usuario (get_lista_registrados paradigmadocs) (usuario user pass date)) (get_lista_logeados paradigmadocs) (get_documentos paradigmadocs)))
   (if (and (es_usuario? username)(es_password? password)(date? date)(not(registrado_antes? paradigmadocs username)))
-      (aniadir_usuario_registrado paradigmadocs username ((get_function1 paradigmadocs) password) date)
+      (aniadir_usuario_registrado paradigmadocs (registrar_usuario (get_lista_registrados paradigmadocs) (usuario username ((get_function1 paradigmadocs) password) date))) ;(registrar_usuario (get_lista_registrados paradigmadocs) (usuario username ((get_function1 paradigmadocs) password) date))
       paradigmadocs))
 
 ; LOGIN:
@@ -26,22 +25,10 @@
 ; Recorrido: operation -> paradigmadocs
 ; Tipo de Recursión: Recursión de cola (función logear -> función tiene_cuenta?)
 (define (login paradigmadocs username password operation)
-        (cond 
-          [(eqv? operation create) (λ (date nombre contenido) ((operation (logear paradigmadocs username password))date nombre contenido))]
-          [(eqv? operation share)  (λ (idDoc access . accesses) ((operation (logear paradigmadocs username password)) idDoc access accesses))]
-          [(eqv? operation add)    (λ (idDoc date content) ((operation (logear paradigmadocs username password)) idDoc date content))]
-          [(eqv? operation restoreVersion) (λ (idDoc idVersion) ((operation (logear paradigmadocs username password)) idDoc idVersion))]
-          [(eqv? operation revokeAllAccesses)(operation (logear paradigmadocs username password))]
-          [(eqv? operation search) (λ (searchText)  ((operation (logear paradigmadocs username password)) searchText))]
-          [(eqv? operation paradigmadocs->string) (operation (logear paradigmadocs username password))]
-          [(eqv? operation delete) (λ (idDoc date numberOfCharacters)((operation (logear paradigmadocs username password)) idDoc date numberOfCharacters))]
-          [(eqv? operation searchAndReplace) (λ (idDoc date searchText replaceText)((operation (logear paradigmadocs username password)) idDoc date searchText replaceText))]
-          [(eqv? operation comment) (λ (idDoc date selectedText commenText)((operation (logear paradigmadocs username password)) idDoc date selectedText commenText))]
-          [(eqv? operation applyStyles) (λ (idDoc date searchText accesslist . styles)((operation (logear paradigmadocs username password)) idDoc date searchText (cons accesslist styles)))]
-          [(eqv? operation ctrlZ) (λ (idDoc numberOfUndo)((operation (logear paradigmadocs username password)) idDoc numberOfUndo))]
-          [(eqv? operation ctrlY) (λ (idDoc numberOfRedo)((operation (logear paradigmadocs username password)) idDoc numberOfRedo))]
-          [else null]))
-
+  (if (procedure? operation)
+      (operation(logear paradigmadocs username password))
+      null))
+                    
 ; CREATE
 ; Descripción: Permite al usuario de paradigmadocs crear un documento en una fecha determinada, un nombre y su contenido encryptado por la función propia de paradigmadocs
 ; Función encapsulada: Nuevo documento
@@ -79,7 +66,7 @@
   (λ(idDoc access . accesses)
     (if (logeado? paradigmadocs)
         (if (and (es_id? idDoc)(eqv? (get_logeado paradigmadocs) (get_creadorDoc_byid paradigmadocs idDoc)))
-            (deslogear (set_documento paradigmadocs (set_permisos paradigmadocs idDoc (filtrar_permisos (get_compartidosDoc_byid paradigmadocs idDoc) (get_accesses accesses) paradigmadocs idDoc))))
+            (deslogear (set_documento paradigmadocs (set_permisos paradigmadocs idDoc (filtrar_permisos (get_compartidosDoc_byid paradigmadocs idDoc) accesses paradigmadocs idDoc))))
             (deslogear paradigmadocs))
         paradigmadocs)))
 
@@ -253,11 +240,11 @@
 (define (applyStyles paradigmadocs)
  (λ (idDoc date searchText . styles)
   (define (set_styles styles)
-    (string-join(map(λ(style)(string-append "#\\" style ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (λ(style)(member style (list #\i #\b #\u)))styles))""))))))))
+    (string-join(map(λ(style)(string-append "#\\" style ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (λ(style)(member style (list #\i #\b #\u))) styles))""))))))))
   (if (logeado? paradigmadocs)
       (if (and (es_id? idDoc)(not(eqv? searchText ""))(date? date)(es_texto? searchText)(member (get_logeado paradigmadocs )(get_editor_users paradigmadocs idDoc)))
           (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText)) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText) (string-append " "((get_function2 paradigmadocs)(set_styles (get_accesses styles)))" "((get_function2 paradigmadocs)searchText)" "((get_function2 paradigmadocs)(set_styles (get_accesses styles)))" ")))))
+              (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((get_function2 paradigmadocs)searchText) (string-append " "((get_function2 paradigmadocs)(set_styles styles))" "((get_function2 paradigmadocs)searchText)" "((get_function2 paradigmadocs)(set_styles styles))" ")))))
               (deslogear paradigmadocs))
           (deslogear paradigmadocs))
       paradigmadocs)))
@@ -388,7 +375,7 @@
 (define gDocs0018   ((login gDocs15 "user1" "pass1" applyStyles) 2 (date 20 10 2021) "Documento1"  #\u #\i #\b )); User1 no es propietario  pero tiene permiso de escritura sobre doc3
 ; COMMENT
 (define gDocs17     ((login gDocs16 "user2" "pass2" comment ) 2 (date 20 10 2021)  "1"  "comentario"))         ; User2 tiene permisos de comentarios sobre doc3
-(define gDocs017    ((login gDocs17 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento"  "comentarioooo"))     ; En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
+(define gDocs017    ((login gDocs17 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento" "comentarioooo"))     ; En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
 (define gDoocs0017  ((login gDocs017"user2" "pass2" comment ) 1 (date 20 10 2021)  ""  "comentarioo"))         ; Se comenta un string vacio
 ; ENCRYPT - DECRYPT
 (decrypt (encrypt "contraseña1234"))
@@ -399,4 +386,3 @@
 (define  gDocs0019 ((login gDocs019 "user1" "pass1" ctrlZ)0 1))   ; Luego, se aplica  ctrlZ  nuevamente ctrlZ sobre el documento id:0, los ctrlZ se acumulan en la memoria Ahora 3
 (define  gDocs20   ((login ((login gDocs18 "user1" "pass1" ctrlZ)0 3) "user1" "pass1" ctrlY)0 3))    ; Ejemplo compuesto donde se aplica CtrlZ 3 veces y CtrlY 3 veces, obteniendo el estado inicial sin ninguna modificación
 (define  gDocs020  ((login gDocs0019 "user1" "pass1" ctrlZ)0 10))    ; Se aplica  ctrlY  3 restaurando la versiono original como si nunca se  hubiera hecho ctrlZ
-
