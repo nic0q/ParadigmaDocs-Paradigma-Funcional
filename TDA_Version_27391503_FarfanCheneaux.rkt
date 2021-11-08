@@ -94,6 +94,12 @@
 (define (set_version pDocs idDoc x)
   (set_documento pDocs (append (filter(λ (x) (not(eqv? idDoc (get_id_documento x))))(get_documentos pDocs))(list(set_version_to_doc pDocs idDoc x)))))
 
+; SET_HISTORIAL: Función que retorna un historial de la forma version1. . . resto_versiones
+; Dominio: lista X lista
+; Recorrido lista
+(define (set_historial version resto_versiones)
+  (append version resto_versiones))
+
 ; MODIFICADORES:
 
 ; RESTAURA_VERSION: Función que obtiene la versión buscada al aplicar "n" veces CtrlZ o CtrlY, desde la versión antigua

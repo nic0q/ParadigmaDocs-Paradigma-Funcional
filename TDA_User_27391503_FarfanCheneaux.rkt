@@ -45,12 +45,14 @@
 ; Tipo de Recursividad: Recursividad de Cola
 (define (tiene_cuenta? pDocs user pass)
   (define (recorrer_lista_registrados lista_registrados)
-  (if (empty? lista_registrados)
-      #f
-      (if (and (equal? user (get_username (car lista_registrados)))(equal? pass (get_password_desencrypt (car lista_registrados))))
-          #t
-          (recorrer_lista_registrados (cdr lista_registrados)))))
-  (recorrer_lista_registrados (get_lista_registrados pDocs)))
+    (if (empty? lista_registrados)
+        #f
+        (if (and (equal? user (get_username (car lista_registrados)))(equal? pass (get_password_desencrypt (car lista_registrados))))
+            #t
+            (recorrer_lista_registrados (cdr lista_registrados)))))
+  (if (and (es_usuario? user)(es_password? pass))
+      (recorrer_lista_registrados (get_lista_registrados pDocs))
+      #f))
 
 ; LOGEADO?: Función que retorna un tipo de dato booleano si el usuario se ha logeado previamente en paradigmadocs
 ; Dominio: paradigma_docs X user
@@ -123,7 +125,7 @@
 ; Tipo de Recursividad: Recursividad de cola (tiene_cuenta?)
 (define (logear pDocs user pass)
   (define (aniadir_usuario_logeado pDocs user)
-    (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs) (get_lista_registrados pDocs) (append (list user)(get_lista_logeados pDocs)) (get_documentos pDocs)))
+    (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(encrypt pDocs)(decrypt pDocs) (get_lista_registrados pDocs) (append (list user)(get_lista_logeados pDocs)) (get_documentos pDocs)))
   (if (and (not(member user (get_lista_logeados pDocs)))(tiene_cuenta? pDocs user pass))
       (aniadir_usuario_logeado pDocs user)
       pDocs))
@@ -132,4 +134,4 @@
 ; Dominio: paradigma_docs (lista)
 ; Recorrido: paradigma_docs (lista)
 (define (deslogear pDocs)
-  (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(get_function1 pDocs)(get_function2 pDocs) (get_lista_registrados pDocs) null (get_documentos pDocs)))
+  (list (get_nombre_plataforma pDocs)(get_fecha_creacion_plataforma pDocs)(encrypt pDocs)(decrypt pDocs) (get_lista_registrados pDocs) null (get_documentos pDocs)))

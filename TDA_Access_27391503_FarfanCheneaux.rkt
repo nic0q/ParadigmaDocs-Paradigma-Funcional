@@ -134,3 +134,13 @@
   (if (not (null? (get_lista_accesos documento)))                          ; Si la lista de compartidos no es nula:
       (append (remove (get_lista_accesos documento)documento) (list null)) ; Se agrega reemplaza por una lista vacía
       documento))                                                          ; Si no solo devuelve el documento
+
+; ACCESS_NAME: Función que obtiene la versión "string" de cada permiso
+; Nota: En esta función no se considera un cond[else] ya que todos los permisos, previamente fueron verificados por la función share
+; Dominio: char
+; Recorrido: string
+(define (access_name permiso)
+      (cond 
+        [(eqv? permiso #\w) "escritura"]
+        [(eqv? permiso #\c) "comentarios"]
+        [(eqv? permiso #\r) "lectura"]))
