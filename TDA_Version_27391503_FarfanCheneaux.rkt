@@ -38,26 +38,12 @@
           (cons (car lista_versiones) (get_id_ocurrencias (cdr lista_versiones) paradigmadocs texto))
           (cons (filter (λ (x) (string-contains? (get_texto_version x) texto))(get_historialDoc_byid paradigmadocs (car lista_versiones)))(get_id_ocurrencias (cdr lista_versiones) paradigmadocs texto)))))
 
-; GET_VERSION_SIN_COMMENT: Función que retorna la ultima version sin comentarios del documento para que pueda ser nuevamente comentada, ya que no es posible comentar 2 veces sobre la misma versión
-; Dominio: paradigmadocs X int
-; Recorrido: lista
-; Se debe crear una nueva versión con 1 solo comentario
-(define (get_version_sin_comment pDocs idDoc)
-  (if(string-contains? (get_contenido_active_version pDocs idDoc) "c%>-") ; Si la versión actual del documento tiene comentarios, se retorna la versión anterior (La cual no tiene comentarios)
-     (get_texto_version(get_segunda_version_byid pDocs idDoc)                     )
-     (get_contenido_active_version pDocs idDoc)))
-
 ; GET_ACTIVE_VERSION_BYID: Obtiene la version activa del documento (La primera en el historial)
+; NOTA: Una versión activa es aquella que no posee comentarios, es decir es solo la original, ya que los comentarios derivan de esta, por lo tanto se realiza un filter
 ; Dominio: paradigmadocs X int
 ; Recorrido: lista
 (define (get_active_version_byid pDocs idDoc)
-  (car (get_historialDoc_byid pDocs idDoc)))
-
-; GET_SEGUNDA_VERSION: Obtiene la versión anterior a la activa
-; Dominio: paradigmadocs X int
-; Recorrido: lista
-(define (get_segunda_version_byid pDocs idDoc)
-  (cadr (get_historialDoc_byid pDocs idDoc)))
+  (car(filter (λ (version)(not(string-contains? (get_texto_version version) "c%>-")))(get_historialDoc_byid pDocs idDoc))))
 
 ; GET_CONTENIDO_ACTIVE_ACTIVE_VERSION: Retorna el "texto" o contenido de la version actual para su modificacion en posteriores versiones (Funcion ADD y Delete)
 ; Dominio: paradigma_docs X int
@@ -73,7 +59,7 @@
 
 ; GET_PRIMERA_VERSION: Función que retorna la primera versión creada en el documento
 (define (get_primera_version pDocs idDoc)
-  (car(filter (lambda(version)(eqv? 0 (get_id_version version)))(get_historialDoc_byid pDocs idDoc))))
+  (car(filter (λ (version)(eqv? 0 (get_id_version version)))(get_historialDoc_byid pDocs idDoc))))
 
 ; SET_ID_VR: Determina el id que le corresponde a la nueva versión creda
 ; Dominio: paradigma_docs X int
@@ -85,7 +71,7 @@
 ; Dominio: paradigma_docs (lista) idDoc (int) newversion(lista) 
 ; Recorrido: lista (Documento actualizado)
 (define (set_version_to_doc pDocs idDoc new_version)
-  (list (get_tituloDoc_byid pDocs idDoc) (get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (get_historialDoc_byid pDocs idDoc)) (get_compartidosDoc_byid pDocs idDoc)))
+  (documento (get_tituloDoc_byid pDocs idDoc) (get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (get_historialDoc_byid pDocs idDoc)) (get_compartidosDoc_byid pDocs idDoc)))
 
 ; SET_VERSION: Añade una nueva version "activa" al paradigmadocs mediante la funcion de paradigmadocs set_documento
 ; Dominio: paradigma_docs X int X lista(contenido)
@@ -102,7 +88,7 @@
 
 ; MODIFICADORES:
 
-; RESTAURA_VERSION: Función que obtiene la versión buscada al aplicar "n" veces CtrlZ o CtrlY, desde la versión antigua
+; GET_N_VERSION: Función que obtiene la versión buscada al aplicar "n" veces CtrlZ o CtrlY, desde la versión antigua
 ; Dominio: lista (historial_doc) X int X int
 ; Recorrido: string
 ; Tipo de Recursividad: Recursividad Natural
@@ -114,3 +100,4 @@
           (car lista)
           (get_n_version_encap (cdr lista) (+ x 1) n))))
   (get_n_version_encap lista 0 n))
+

@@ -19,7 +19,7 @@
 ; Descripción: Funcion que retorna los elementos ingresados (cdr) por una access list, (car) es la cabeza "styles", es usada para almacenar los estilos aplicados a un documento
 ; Dominio: char . . .
 ; Recorrido: Access list (cdr) . . .
-(define (styles . x ) x )
+(define (styles . style ) style )
 
 ; SELECTORES
 

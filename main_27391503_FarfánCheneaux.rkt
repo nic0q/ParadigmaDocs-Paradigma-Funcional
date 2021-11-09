@@ -22,7 +22,7 @@
       null))
 
 ; LOGIN:
-; Descripción: Funcion que inicia sesion en paradigmadocs e hace un llamado a una 'operation' disponible en paradigmadocs, dentro de cada una de estas se comprobará si el usuario que logeo correctamente
+; Descripción: Funcion agnostica que logea al usuario en paradigmadocs, si sus credenciales son correctas (username y password)
 ; Dominio: paradigmadocs X string X string X operation
 ; Recorrido: operation -> paradigmadocs
 ; Tipo de Recursión: Recursión de cola (función logear -> función tiene_cuenta?)
@@ -49,7 +49,7 @@
 (define (create paradigmadocs)
   (λ(date nombre contenido)
     (define (primer_documento pDocs date title contenido creador)
-      (set_documento pDocs (append (list(documento title creador (set_id_doc pDocs) (list (version 0 date contenido))null))(get_documentos pDocs))))
+      (set_documento pDocs (aniadir_doc (documento title creador (set_id_doc pDocs) (list (version 0 date contenido))null)(get_documentos pDocs))))
     (if (logeado? paradigmadocs)
         (if (and (date? date)(es_nombre? nombre)(es_texto? contenido))
             (deslogear (primer_documento paradigmadocs date nombre ((encrypt paradigmadocs) contenido) (get_logeado paradigmadocs)))
@@ -84,11 +84,11 @@
 
 (define (add paradigmadocs)
   (λ (idDoc date contenidoTexto)
-   (if (logeado? paradigmadocs)
-       (if (and (es_id? idDoc)(es_texto? contenidoTexto)(date? date)(member (get_logeado paradigmadocs) (get_editor_users paradigmadocs idDoc)))
-           (deslogear (set_version paradigmadocs idDoc  (version (set_id_vr paradigmadocs idDoc)date((encrypt paradigmadocs)(string-join(list(decryptFn(get_contenido_active_version paradigmadocs idDoc)) contenidoTexto))))))
-           (deslogear paradigmadocs))
-       paradigmadocs)))
+    (if (logeado? paradigmadocs)
+        (if (and (es_id? idDoc)(es_texto? contenidoTexto)(date? date)(member (get_logeado paradigmadocs) (get_editor_users paradigmadocs idDoc)))
+            (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc)date((encrypt paradigmadocs)(string-join (list (decryptFn(get_contenido_active_version paradigmadocs idDoc)) contenidoTexto))))))
+            (deslogear paradigmadocs))
+        paradigmadocs)))
 
 ; RESTORE VERSION
 ; Descripción: Función que 'restaura' un versión, es decir que la versión escogida pasa a ser la versión activa en el documento, si la versión no existe se retorna p.docs sin
@@ -100,15 +100,14 @@
 ; Tipo de Recursividad: funciones declarativas (filter, map)
 
 (define (restoreVersion paradigmadocs)
- (λ (idDoc idVersion)
-  (if (logeado? paradigmadocs)
-      (if (and (es_id? idDoc)(es_id? idVersion)(eqv? (get_logeado paradigmadocs)(get_creadorDoc_byid paradigmadocs idDoc)))
-          (deslogear (set_documento paradigmadocs (append (list (documento (get_tituloDoc_byid paradigmadocs idDoc) (get_creadorDoc_byid paradigmadocs idDoc) idDoc
-                                                                      (set_historial (filter (λ (version) (eqv? idVersion (get_id_version version))) (get_historialDoc_byid paradigmadocs idDoc))
-                                                                                          (filter (λ (version) (not(eqv? idVersion (get_id_version version)))) (get_historialDoc_byid paradigmadocs idDoc))) (get_compartidosDoc_byid paradigmadocs idDoc)))
-                                                          (filter (λ (documento)(not(eqv? idDoc (get_id_documento documento))))(get_documentos paradigmadocs)))))
-          (deslogear paradigmadocs))
-      paradigmadocs)))
+  (λ (idDoc idVersion)
+    (if (logeado? paradigmadocs)
+        (if (and (es_id? idDoc)(es_id? idVersion)(eqv? (get_logeado paradigmadocs)(get_creadorDoc_byid paradigmadocs idDoc)))
+            (deslogear (set_documento paradigmadocs (set_doc paradigmadocs idDoc (documento (get_tituloDoc_byid paradigmadocs idDoc) (get_creadorDoc_byid paradigmadocs idDoc) idDoc
+                                                                                            (set_historial (filter (λ (version) (eqv? idVersion (get_id_version version))) (get_historialDoc_byid paradigmadocs idDoc))
+                                                                                     (filter (λ (version) (not(eqv? idVersion (get_id_version version)))) (get_historialDoc_byid paradigmadocs idDoc))) (get_compartidosDoc_byid paradigmadocs idDoc)))))                                                       
+            (deslogear paradigmadocs))
+        paradigmadocs)))
 
 ; REVOKE ALL ACCESSES
 ; Descripción: Funcion que elimina los permisos que el usuario ha otorgado a otros usuarios de todos sus documentos, solo el creador de un documento puede usar esta función
@@ -121,7 +120,7 @@
       (if (empty? (filter (λ (documento)(eqv? (get_logeado paradigmadocs)(get_autor documento)))(get_documentos paradigmadocs)))
           (deslogear paradigmadocs )
           (deslogear(set_documento paradigmadocs(append(filter (λ (documento) (not(eqv? (get_logeado paradigmadocs) (get_autor documento)))) (get_documentos paradigmadocs)) 
-                                                         (map eliminar_permisos (filter (λ (documento) (eqv? (get_logeado paradigmadocs) (get_autor documento))) (get_documentos paradigmadocs)))))))
+                                                       (map eliminar_permisos (filter (λ (documento) (eqv? (get_logeado paradigmadocs) (get_autor documento))) (get_documentos paradigmadocs)))))))
       paradigmadocs))
 
 ; SEARCH
@@ -132,11 +131,11 @@
 ; Tipo de Recursividad: Recursivida Natural (get_id_ocurrencias) y funciones declarativas (map, filter)
 
 (define (search paradigmadocs)
- (λ (searchText)
-  (if (and (logeado? paradigmadocs)(es_texto? searchText))
-      (map (λ (id) (get_doc_byId paradigmadocs id))
-           (filter (λ (id) (not(null? id))) (get_id_ocurrencias (get_id_documentos_acceso paradigmadocs (get_logeado paradigmadocs)) paradigmadocs ((decrypt paradigmadocs)searchText))))
-      null)))
+  (λ (searchText)
+    (if (and (logeado? paradigmadocs)(es_texto? searchText))
+        (map (λ (id) (get_doc_byId paradigmadocs id))
+             (filter (λ (id) (not(null? id))) (get_id_ocurrencias (get_id_documentos_acceso paradigmadocs (get_logeado paradigmadocs)) paradigmadocs ((decrypt paradigmadocs)searchText))))
+        null)))
 
 ; PARADIGMADOCS->STRING
 ; Descripción: Función que permite crear una versión de 'string' organizado del documento para que el contenido de la plataforma paradigmadocs sea entendible por el usuario;
@@ -209,14 +208,14 @@
 ; Tipo de Recursividad: funciones declarativas (get_editor_users, set_version)
 
 (define (delete paradigmadocs)
- (λ (idDoc date numberOfCharacters)    
-  (if (logeado? paradigmadocs)
-      (if (and (es_id? idDoc)(date? date)(integer? numberOfCharacters)(not (eqv? 0 numberOfCharacters))(member (get_logeado paradigmadocs) (get_editor_users paradigmadocs idDoc))) ;si pertenece a los editores, si el numero de caracteres a eliminar es distinto de 0 ya que no borraria nada
-          (if (>= numberOfCharacters (string-length(get_contenido_active_version paradigmadocs idDoc)))
-              (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date "")))
-              (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date ((encrypt paradigmadocs) (substring ((decrypt paradigmadocs)(get_contenido_active_version paradigmadocs idDoc))0(-(string-length (get_contenido_active_version paradigmadocs idDoc)) numberOfCharacters))))))) ; Se elimina el texto
-          (deslogear paradigmadocs))
-      paradigmadocs))) 
+  (λ (idDoc date numberOfCharacters)    
+    (if (logeado? paradigmadocs)
+        (if (and (es_id? idDoc)(date? date)(integer? numberOfCharacters)(not (eqv? 0 numberOfCharacters))(member (get_logeado paradigmadocs) (get_editor_users paradigmadocs idDoc))) ;si pertenece a los editores, si el numero de caracteres a eliminar es distinto de 0 ya que no borraria nada
+            (if (>= numberOfCharacters (string-length(get_contenido_active_version paradigmadocs idDoc)))
+                (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date "")))
+                (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date ((encrypt paradigmadocs) (substring ((decrypt paradigmadocs)(get_contenido_active_version paradigmadocs idDoc))0(-(string-length (get_contenido_active_version paradigmadocs idDoc)) numberOfCharacters))))))) ; Se elimina el texto
+            (deslogear paradigmadocs))
+        paradigmadocs))) 
 
 ; SEARCH AND REPLACE
 ; Descripción: Función que permite buscar y reemplazar texto de la versión activa del documento, solo los  usuarios con permiso de edición pueden usar esta herramiento
@@ -226,14 +225,14 @@
 ; Tipo de Recursividad: funciones declarativas (get_editor_users, set_version)
 
 (define (searchAndReplace paradigmadocs)
- (λ (idDoc date searchText replaceText)
-  (if (logeado? paradigmadocs)
-      (if (and (member (get_logeado paradigmadocs)(get_editor_users paradigmadocs idDoc))(not(eqv? searchText replaceText))(es_id? idDoc)(date? date)(es_texto? searchText)(es_texto? replaceText))
-          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((decrypt paradigmadocs)searchText)) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc)((decrypt paradigmadocs)searchText)((decrypt paradigmadocs)replaceText)))))
-              (deslogear paradigmadocs))
-          (deslogear paradigmadocs))
-      paradigmadocs)))
+  (λ (idDoc date searchText replaceText)
+    (if (logeado? paradigmadocs)
+        (if (and (member (get_logeado paradigmadocs)(get_editor_users paradigmadocs idDoc))(not(eqv? searchText replaceText))(es_id? idDoc)(date? date)(es_texto? searchText)(es_texto? replaceText))
+            (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((decrypt paradigmadocs)searchText)) ; Si encuentra texto
+                (deslogear (set_version paradigmadocs idDoc (version (set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc)((decrypt paradigmadocs)searchText)((decrypt paradigmadocs)replaceText)))))
+                (deslogear paradigmadocs))
+            (deslogear paradigmadocs))
+        paradigmadocs)))
 
 ; APPLYSTYLES
 ; Descripción: Función que permite aplicar los estilos [#\i, #\b, #\u] a un texto seleccionado del documento, solo los usuarios con permiso de edición pueden usar esta herramienta
@@ -244,99 +243,98 @@
  ; SET_STYLES: Función que crea un string con los estilos para agregarlo al documento, ademas se filtra la acceslist style para que los estilos solo sean italic, bold, underlined(#\i #\b #\u)
  ; Dominio: access list (styles)
  ; Recorrido: string
- ; Tipo de Recursión: implicita en funciones declarativas: filter
-
+ 
 (define (applyStyles paradigmadocs)
- (λ (idDoc date searchText . styles)
-  (define (set_styles styles)
-    (string-join(map(λ(style)(string-append "#\\" style ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (λ(style)(member style (list #\i #\b #\u))) styles))""))))))))
-  (if (logeado? paradigmadocs)
-      (if (and (es_id? idDoc)(not(eqv? searchText ""))(date? date)(es_texto? searchText)(member (get_logeado paradigmadocs )(get_editor_users paradigmadocs idDoc)))
-          (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((decrypt paradigmadocs)searchText)) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((decrypt paradigmadocs)searchText) (string-append " "((decrypt paradigmadocs)(set_styles styles))" "((decrypt paradigmadocs)searchText)" "((decrypt paradigmadocs)(set_styles styles))" ")))))
-              (deslogear paradigmadocs))
-          (deslogear paradigmadocs))
-      paradigmadocs)))
+  (λ (idDoc date searchText . styles)
+    (define (set_styles styles)
+      (string-join(map(λ(style)(string-append "#\\" style ))(reverse(cdr(reverse(cdr(string-split(list->string (filter (λ(style)(member style (list #\i #\b #\u))) styles))""))))))))
+    (if (logeado? paradigmadocs)
+        (if (and (es_id? idDoc)(not(eqv? searchText ""))(date? date)(es_texto? searchText)(member (get_logeado paradigmadocs )(get_editor_users paradigmadocs idDoc)))
+            (if (string-contains? (get_contenido_active_version paradigmadocs idDoc) ((decrypt paradigmadocs)searchText)) ; Si encuentra texto
+                (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_contenido_active_version paradigmadocs idDoc) ((decrypt paradigmadocs)searchText) (string-append " "((decrypt paradigmadocs)(set_styles styles))" "((decrypt paradigmadocs)searchText)" "((decrypt paradigmadocs)(set_styles styles))" ")))))
+                (deslogear paradigmadocs))
+            (deslogear paradigmadocs))
+        paradigmadocs)))
 
 ; COMMENT
 ; Descripción: Función que permite comentar texto seleccionado de la ultima versión de el documento, solo los usuarios con acceso a comentarios, escritura o creadores pueden comentar
 ; Condiciones de funcionamiento:
-; -  En caso la version actual del documento ya está comentada, la funcion (get_version_sin_comment) retorna la ultima version sin comentar, esta será la que se comente ahora, eliminando el anterior comentario
+; No se puede comentar una misma versión ya comentada 2 veces, en caso exista un comentario, se comenta la version inicial sin comentario
 ; Dominio: paradigmadocs X int X date X String X String
 ; Recorrido: paradigmadocs
 ; Tipo de Recursividad: Ninguna
 
 (define (comment paradigmadocs)
- (λ (idDoc date selectedText commenText)
-  (if  (logeado? paradigmadocs)
-      (if (and(member (get_logeado paradigmadocs)(get_editor_and_comment_users paradigmadocs idDoc))(es_id? idDoc)(date? date)(es_texto? selectedText)(es_texto? commenText))
-          (if (string-contains? (get_version_sin_comment paradigmadocs idDoc) ((decrypt paradigmadocs)selectedText)) ; Si encuentra texto
-              (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_version_sin_comment paradigmadocs idDoc)((decrypt paradigmadocs)selectedText) ((decrypt paradigmadocs)(string-append selectedText "->%c["commenText "]c% "))))))
-              (deslogear paradigmadocs))
-          (deslogear paradigmadocs))
-      paradigmadocs)))
+  (λ (idDoc date selectedText commenText)
+   (if  (logeado? paradigmadocs)
+        (if (and(member (get_logeado paradigmadocs)(get_editor_and_comment_users paradigmadocs idDoc))(es_id? idDoc)(date? date)(es_texto? selectedText)(es_texto? commenText))
+            (if (string-contains? (get_texto_version(get_active_version_byid paradigmadocs idDoc)) ((decrypt paradigmadocs)selectedText)) ; Si encuentra texto
+                (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_texto_version(get_active_version_byid paradigmadocs idDoc))((decrypt paradigmadocs)selectedText) ((decrypt paradigmadocs)(string-append selectedText "->%c["commenText "]c% "))))))
+                (deslogear paradigmadocs))
+            (deslogear paradigmadocs))
+        paradigmadocs)))
 
-; ENCRYPT
+; ENCRYPTDn
 ; Descripción: Función que encripta texto de forma distinta a la propuesta
 ; Dominio: string
 ; Recorrido: string
 ; Tipo de Recursividad: Ninguna
 
 (define (encryptDn text)
-  (list->string (map(λ(number)(integer->char number)) (map(λ(number)(+ number 5)) (map (λ(char) (char->integer char)) (string->list text))))))
+  (list->string (map(λ(number)(integer->char number))(map(λ(number)(+ number 5))(map (λ(char)(char->integer char))(string->list text))))))
 
-; DECRYPT
+; DECRYPTDn
 ; Descripción: Función que desencripta texto de forma distinta a la propuesta
 ; Dominio: string
 ; Recorrido: string
 ; Tipo de Recursividad: Ninguna
 
 (define (decryptDn text)
-  (list->string(map(λ(number)(integer->char number)) (map(λ(number)(- number 5))(map (λ(char) (char->integer char))(string->list text))))))
+  (list->string(map(λ(number)(integer->char number))(map(λ(number)(- number 5))(map (λ(char)(char->integer char))(string->list text))))))
 
 ; CtrlZ
 ; Descripción: Función que deshace los cambios hechos en  la versión activa del documento, esta función crea una memoria  que guarda los datos de la versión donde se deshaceran
 ; y rehaceran los cambios, la cual contiene el texto de esta y el numero undos, el documento queda  de la forma: ; ID DATE CONTENT MEMORIA -> (ULTIMA VERSION N°RESTAURADOS)
 ; Dominio paradigmadocs X int X int
 ; Recorrido: paradigmadocs
-; Tipo de Recursividad: Recursividad de cola (Función actualizarvz->restaura_version)
+; Tipo de Recursividad: Recursividad de cola (Función actualizarvz->get_n_version)
 
 (define (ctrlZ paradigmadocs)
   (λ (idDoc numberOfUndo)
-  (if (logeado? paradigmadocs)
-      (if (>= (get_n_versions paradigmadocs idDoc)numberOfUndo)
-          (deslogear(set_documento paradigmadocs (set_doc paradigmadocs idDoc (list(update_doc paradigmadocs idDoc (actualizar_vz paradigmadocs idDoc numberOfUndo))))))
-          (deslogear paradigmadocs))
-      paradigmadocs)))
+    (if (logeado? paradigmadocs)
+        (if (>= (get_n_versions paradigmadocs idDoc)numberOfUndo)
+            (deslogear(set_documento paradigmadocs (set_doc paradigmadocs idDoc (update_doc paradigmadocs idDoc (actualizar_vz paradigmadocs idDoc numberOfUndo)))))
+            (deslogear paradigmadocs))
+        paradigmadocs)))
 
 ; CtrlY
 ; Descripción: Función que rehace los cambios hechos por CtrlZ, para su funcionamiento se debe hacer CtrlZ antes
 ; Si el número CtrlY excede al número de versiones, numberOfRedo es el numero de versiones
 ; Dominio paradigmadocs X int X int
 ; Recorrido: paradigmadocs
-; Tipo de Recursividad: Recursividad de cola (Función actualizarvy->restaura_version)
+; Tipo de Recursividad: Recursividad de cola (Función actualizarvz->get_n_version)
 
 (define (ctrlY paradigmadocs)
-               (λ (idDoc numberOfRedo)
-  (if (logeado? paradigmadocs)
-      (if (>= (get_n_versions paradigmadocs idDoc)numberOfRedo)
-          (deslogear(set_documento paradigmadocs (set_doc paradigmadocs idDoc (list(update_doc paradigmadocs idDoc (actualizar_vy paradigmadocs idDoc numberOfRedo))))))
-          (deslogear paradigmadocs))
-      paradigmadocs)))
+  (λ (idDoc numberOfRedo)
+    (if (logeado? paradigmadocs)
+        (if (>= (get_n_versions paradigmadocs idDoc)numberOfRedo)
+            (deslogear(set_documento paradigmadocs (set_doc paradigmadocs idDoc (update_doc paradigmadocs idDoc (actualizar_vy paradigmadocs idDoc numberOfRedo)))))
+            (deslogear paradigmadocs))
+        paradigmadocs)))
       
 ;---------------------------------------------------------------------EJEMPLOS------------------------------------------------------------------------------------
 ; CONSTRUCTOR PARADIGMADOCS
 (define emptyGDocs (paradigmadocs "NICO DOCS" (date 25 10 2021) encryptFn decryptFn))
 ; REGISTER
-(define gDocs1    (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user2" "pass2") (date 27 10 2021) "user3" "pass3"))
-(define gDocs01   (register (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user3" "pass3") (date 27 10 2021) "user1" "passxx")(date 27 10 2021) "user4" "pass4"))
-(define gDocs001  (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user1" "pass2") (date 27 10 2021) "user1" "pass3"))
+(define gDocs1     (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user2" "pass2") (date 27 10 2021) "user3" "pass3"))
+(define gDocs01    (register (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user3" "pass3") (date 27 10 2021) "user1" "passxx")(date 27 10 2021) "user4" "pass4"))
+(define gDocs001   (register (register (register emptyGDocs (date 25 10 2021) "user1" "pass1") (date 26 10 2021) "user1" "pass2") (date 27 10 2021) "user1" "pass3"))
 ; CREATE
 (define gDocs2     ((login gDocs1 "user1" "pass1" create) (date 30 08 2021) "doc1" "Documento1 creado por user1"))
 (define gDocs3     ((login gDocs2 "user2" "pass2" create) (date 30 09 2021) "doc2" "Documento1 creado por user2"))
 (define gDocs04    ((login gDocs3 "user3" "pass3" create) (date 30 10 2021) "doc3" "Documento1 creado por user3"))
 (define gDocs4     ((login gDocs04 "user1" "pass1" create)(date 30 10 2021) "doc4" "Documento2 creado por user1"))
-(define gDocs02    ((login gDocs4 "user3" "pass34" create) (date 30 10 2021) "doc4" "Documento2 creado por user3")) ;Contraseña incorrecta-> no logeado -> doc no creado
+(define gDocs02    ((login gDocs4 "user3" "pass34" create)(date 30 10 2021) "doc4" "Documento2 creado por user3")) ;Contraseña incorrecta-> no logeado -> doc no creado
 ; SHARE
 (define gDocs5     ((login gDocs4 "user1" "pass1" share)  0 (access "user1" #\y )(access "user1" #\t)(access "user3" #\r) (access "user2" #\c)(access "user2" #\o)(access "user10" #\c)))
 (define gDocs05    ((login gDocs5 "user1" "pass1" share)  0 (access "user1" #\y )(access "user1" #\t)(access "user3" #\r) (access "user2" #\w)(access "user2" #\o)(access "user10" #\c))) ;se comparte nuevamente el doc:id:0 cambiando el permiso de user2#\c a user2 #\w, los demas permisos se mantienen intactos
@@ -351,15 +349,15 @@
 (define gDocs009   ((login gDocs09 "user1" "pass1" add)  1 (date 21 10 2021) "No añado en doc2"));user1 NO tiene permiso de escritura en doc2, no añade texto
 (define gDocs0009  ((login gDocs009 "user3" "pass3" add) 1 (date 21 10 2021) "No Añado doc2"))   ;user3 NO tiene permiso de escritura en doc2, solo lectura, no añade texto
 ; RESTORE VERSION
-(define gDocs010   ((login gDocs9 "user1" "pass1" restoreVersion)    0 1)) ;user1 creador de doc1, se restaura versión 1, se verifica mediante: (get_id_version(get_active_version_byid gDocs010 0)) -> 1
-(define gDocs0ex10 ((login gDocs010 "user2" "pass2" restoreVersion)  1 1)) ;user2 creador de doc2, pero la version 1 no existe, no se restura:   (get_id_version(get_active_version_byid gDocs0ex10 1)) -> 0
-(define gDocs0010  ((login gDocs010 "user1" "pass1" restoreVersion)  2 0)) ;user1 no es el creador de doc2, no se restaura versión:             (get_id_version(get_active_version_byid gDocs0010 2)) -> 1
+(define gDocs010   ((login gDocs9    "user1" "pass1" restoreVersion) 0 1)) ;user1 creador de doc1, se restaura versión 1, se verifica mediante: (get_id_version(get_active_version_byid gDocs010 0)) -> 1
+(define gDocs0ex10 ((login gDocs010  "user2" "pass2" restoreVersion) 1 1)) ;user2 creador de doc2, pero la version 1 no existe, no se restura:  (get_id_version(get_active_version_byid gDocs0ex10 1)) -> 0
+(define gDocs0010  ((login gDocs010  "user1" "pass1" restoreVersion) 2 0)) ;user1 no es el creador de doc2, no se restaura versión:             (get_id_version(get_active_version_byid gDocs0010 2)) -> 1
 (define gDocs10    ((login gDocs0010 "user3" "pass3" restoreVersion) 2 0)) ;user3 es el creador de doc3, se restaura versión 0:                 (get_id_version(get_active_version_byid gDocs10 2)) -> 0
 ; REVOKE ALL ACCESSES
-(define gDocs11     (login gDocs10   "user1" "pass1"   revokeAllAccesses)) ;user1 es propietario de doc4 y doc1, se eliminan todos los permisos para acceder a estos documentos
-(define gDocs011    (login gDocs11   "user2" "pass2"   revokeAllAccesses)) ;user2 es propietario de doc2, se eliminan todos los permisos para acceder a estos documentos
-(define gDocs0011   (login gDocs011  "user7" "passxyz" revokeAllAccesses)) ;usuario no esta registrado
-(define gDocs00011  (login gDocs0011 "user3" "pass3"   revokeAllAccesses)) ;user2 es propietario de doc3, se eliminan todos los permisos para acceder a estos documentos
+(define gDocs11    (login gDocs10   "user1" "pass1"   revokeAllAccesses)) ;user1 es propietario de doc4 y doc1, se eliminan todos los permisos para acceder a estos documentos
+(define gDocs011   (login gDocs11   "user2" "pass2"   revokeAllAccesses)) ;user2 es propietario de doc2, se eliminan todos los permisos para acceder a estos documentos
+(define gDocs0011  (login gDocs011  "user7" "passxyz" revokeAllAccesses)) ;usuario no esta registrado
+(define gDocs00011 (login gDocs0011 "user3" "pass3"   revokeAllAccesses)) ;user2 es propietario de doc3, se eliminan todos los permisos para acceder a estos documentos
 ; SEARCH
 ((login gDocs11 "user1" "pass1" search) "por")     ;encuentra "por" en: doc1 (creador), doc4(creador), doc3(le fue compartido)
 ((login gDocs11 "user2" "pass2" search) "Doc")     ;encuentra "Doc" em doc2 (creador), doc3(le fue compartido)
@@ -367,11 +365,11 @@
 ((login gDocs11 "user6" "pass6" search) "Doc")     ;no busca texto, el usuario no está registrado
 ((login gDocs11 "user3" "pass123" search) "por")   ;no busca texto, el "user" está registrado, pero Contraseña incorrecta
 ; PARADIGMADOCS->STRING
-(login gDocs11 "user3" "pass3" paradigmadocs->string)           ;-> "user3" registrado *versión LOGIN "user3"*
-(login gDocs11 "user1" "pass3" paradigmadocs->string)           ;-> user1 no registrado (constraseña incorrecta) versión NO LOGIN
-(login gDocs11 "user2" "pass2" paradigmadocs->string)           ;-> "user2" registrado *versión LOGIN "user2"*
-(login gDocs11 "user10" "pass2" paradigmadocs->string)          ;-> user10 no registrado, versión NO LOGIN
-(paradigmadocs->string gDocs11)                                 ;-> versión NO LOGIN
+(login gDocs11 "user3" "pass3" paradigmadocs->string)  ;-> "user3" registrado *versión LOGIN "user3"*
+(login gDocs11 "user1" "pass3" paradigmadocs->string)  ;-> user1 no registrado (constraseña incorrecta) versión NO LOGIN
+(login gDocs11 "user2" "pass2" paradigmadocs->string)  ;-> "user2" registrado *versión LOGIN "user2"*
+(login gDocs11 "user10" "pass2" paradigmadocs->string) ;-> user10 no registrado, versión NO LOGIN
+(paradigmadocs->string gDocs11)                        ;-> versión NO LOGIN
 ; DELETE
 (define gDocs14     ((login gDocs11 "user1" "pass1" delete) 0 (date 30 11 2021) 0))          ; No se elimina nada, no se crea una nueva versión
 (define gDocs014    ((login gDocs11 "user1" "pass1" delete) 0 (date 30 11 2021) 10))         ; Se eliminan los 10 ultimos caracteres de la versión activa de doc0 y se actualiza la ultima versión activa
@@ -388,9 +386,9 @@
 (define gDocs018    ((login gDocs15 "user1" "pass1" applyStyles) 0 (date 20 10 2021) "Documento1 creado"  #\u #\i #\b )) ; Se aplican todos los estilos
 (define gDocs0018   ((login gDocs15 "user1" "pass1" applyStyles) 2 (date 20 10 2021) "Documento1"  #\u #\i #\b )); User1 no es propietario  pero tiene permiso de escritura sobre doc3
 ; COMMENT
-(define gDocs17     ((login gDocs16 "user2" "pass2" comment ) 2 (date 20 10 2021)  "1"  "comentario"))         ; User2 tiene permisos de comentarios sobre doc3
-(define gDocs017    ((login gDocs17 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento" "comentarioooo"))     ; En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
-(define gDoocs0017  ((login gDocs017"user2" "pass2" comment ) 1 (date 20 10 2021)  ""  "comentarioo"))         ; Se comenta un string vacio
+(define gDocs17     ((login gDocs16 "user2" "pass2" comment ) 2 (date 20 10 2021)  "1"  "comentario"))          ; User2 tiene permisos de comentarios sobre doc3
+(define gDocs017    ((login gDocs17 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento" "comentarioooo")); En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
+(define gDoocs0017  ((login gDocs017"user2" "pass2" comment ) 1 (date 20 10 2021)  ""  "comentarioo"))          ; Se comenta un string vacio, no se hace ningún comentario
 ; ENCRYPT - DECRYPT
 (decryptDn (encryptDn "contraseña1234"))
 (decryptDn (encryptDn "laboratorio1"))

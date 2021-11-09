@@ -116,7 +116,13 @@
 ; Dominio: paradigma_docs X int X lista(contenido)
 ; Recorrido: lista (Documentos actualizados)
 (define (set_doc pDocs idDoc documento)
-  (append (filter(λ(documento)(not(eqv? idDoc (get_id_documento documento))) ) (get_documentos pDocs)) documento))
+  (append (list documento)(filter(λ(documento)(not(eqv? idDoc (get_id_documento documento)))) (get_documentos pDocs))))
+
+; ANIADIR_DOC: Funcion que añade un documento al inicio de la lista de documentos
+; Dominio: lista X lista
+; Recorrido: lista
+(define (aniadir_doc documento historial)
+  (append (list documento) historial))
 
 ; MODIFICADORES
 
@@ -124,4 +130,4 @@
 ; Dominio: paradigma_docs X int X lista(version)
 ; Recorrido: lista (Documentos actualizados)
 (define (update_doc pDocs idDoc new_version)
-  (list (get_tituloDoc_byid pDocs idDoc) (get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (cdr(get_historialDoc_byid pDocs idDoc))) (get_compartidosDoc_byid pDocs idDoc)))
+  (documento (get_tituloDoc_byid pDocs idDoc)(get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (cdr(get_historialDoc_byid pDocs idDoc))) (get_compartidosDoc_byid pDocs idDoc)))
