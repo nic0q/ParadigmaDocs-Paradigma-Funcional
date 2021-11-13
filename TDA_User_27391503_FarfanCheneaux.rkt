@@ -62,6 +62,11 @@
       #f
       #t))
 
+; TIENE_PERMISO?
+
+(define (tiene_permiso? usuario usuarios_con_permiso)
+  (member usuario usuarios_con_permiso))
+
 ; GET_CUENTA: Función que busca e imprime la cuenta mediante su user name de la forma (user X password X date )
 ; Dominio: paradigmadocs (lista) X user (string)
 ; Recorrido: lista

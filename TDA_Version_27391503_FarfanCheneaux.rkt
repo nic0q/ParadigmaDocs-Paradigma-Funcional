@@ -39,17 +39,17 @@
           (cons (filter (λ (x) (string-contains? (get_texto_version x) texto))(get_historialDoc_byid paradigmadocs (car lista_versiones)))(get_id_ocurrencias (cdr lista_versiones) paradigmadocs texto)))))
 
 ; GET_ACTIVE_VERSION_BYID: Obtiene la version activa del documento (La primera en el historial)
-; NOTA: Una versión activa es aquella que no posee comentarios, es decir es solo la original, ya que los comentarios derivan de esta, por lo tanto se realiza un filter
+; NOTA: Una versión activa para ser usada con cualquier 'operation' debe  contener solo strings de texto, por lo tanto no debe tener STYLES NI COMENTARIOS
+; Para no tener conflictos con la función seach o search and replace, por lo tanto se filtra hasta que la versión no tenga "\\#" (STYLES) o "c%>-" (COMENTARIOS)
 ; Dominio: paradigmadocs X int
 ; Recorrido: lista
-(define (get_active_version_byid pDocs idDoc)
-  (car(filter (λ (version)(not(string-contains? (get_texto_version version) "c%>-")))(get_historialDoc_byid pDocs idDoc))))
 
-; GET_CONTENIDO_ACTIVE_ACTIVE_VERSION: Retorna el "texto" o contenido de la version actual para su modificacion en posteriores versiones (Funcion ADD y Delete)
-; Dominio: paradigma_docs X int
-; Recorrido: string
-(define (get_contenido_active_version pDocs idDoc)
-  (caddr (get_active_version_byid pDocs idDoc)))
+(define (get_active_version_byid pDocs idDoc)
+  (car(get_historialDoc_byid pDocs idDoc)))
+
+; GET_ACTIVE_FILTERVERSION: ACA LOS COMENTASO APPYLYSYLES
+(define (get_active_filterversion_byid pDocs idDoc)
+  (car(filter (λ (version) (and (not(string-contains? (get_texto_version version) "\\#"))(not(string-contains? (get_texto_version version) "c%>-"))))(get_historialDoc_byid pDocs idDoc))))
 
 ; GET_N_VERSIONS: Funcion que retorna el numero de versiones creadas en un documento mediante su id
 ; Dominio: paradigmadocs X int

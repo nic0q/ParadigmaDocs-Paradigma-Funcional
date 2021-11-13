@@ -129,5 +129,5 @@
 ; UPDATE_DOC: Función que actualiza la versión sin crear una nueva (mismo id)
 ; Dominio: paradigma_docs X int X lista(version)
 ; Recorrido: lista (Documentos actualizados)
-(define (update_doc pDocs idDoc new_version)
-  (documento (get_tituloDoc_byid pDocs idDoc)(get_creadorDoc_byid pDocs idDoc) idDoc (append (list new_version) (cdr(get_historialDoc_byid pDocs idDoc))) (get_compartidosDoc_byid pDocs idDoc)))
+(define (update_doc pDocs idDoc nueva_version)
+  (documento (get_tituloDoc_byid pDocs idDoc)(get_creadorDoc_byid pDocs idDoc) idDoc (append (list nueva_version) (cdr(get_historialDoc_byid pDocs idDoc))) (get_compartidosDoc_byid pDocs idDoc)))
