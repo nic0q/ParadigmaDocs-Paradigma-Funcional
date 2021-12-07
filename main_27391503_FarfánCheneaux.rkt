@@ -390,9 +390,9 @@
 (define gDocs09    ((login gDocs9 "user1" "pass1" applyStyles) 0 (date 20 10 2021) "user1"  #\u #\i #\b )) ; Se aplican todos los estilos
 (define gDocs009   ((login gDocs09 "user1" "pass1" applyStyles) 2 (date 20 10 2021) "Documento1"  #\u #\i #\b )); User1 no es propietario  pero tiene permiso de escritura sobre doc3
 ; COMMENT
-(define gDocs10    ((login gDocs9 "user2" "pass2" comment ) 2 (date 20 10 2021)  "Documento1"  "comentario"))          ; User2 tiene permisos de comentarios sobre doc3
-(define gDocs010   ((login gDocs10 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento" "comentarioooo")); En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
-(define gDoocs0010 ((login gDocs010"user2" "pass2" comment ) 1 (date 20 10 2021)  ""  "comentarioo"))          ; Se comenta un string vacio, no se hace ningún comentario
+(define gDocs10    ((login gDocs9 "user2" "pass2" comment ) 2 (date 20 10 2021)  "Documento1"  "PrimerComentario"))          ; User2 tiene permisos de comentarios sobre doc3
+(define gDocs010   ((login gDocs10 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento" "SegundoComentario")); En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
+(define gDoocs0010 ((login gDocs010"user2" "pass2" comment ) 1 (date 20 10 2021)  ""  "Emptycomentarioo"))          ; Se comenta un string vacio, no se hace ningún comentario
 ; ENCRYPT - DECRYPT
 ;(decryptDn (encryptDn "contraseña1234"))
 ;(decryptDn (encryptDn "laboratorio1"))
