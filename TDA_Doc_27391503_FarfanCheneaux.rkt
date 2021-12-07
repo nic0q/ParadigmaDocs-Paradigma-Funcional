@@ -26,6 +26,9 @@
 (define (es_nombre? nombre)
   (string? nombre))
 
+(define (tiene_documentos? pDocs user)
+  (empty? (filter (λ (documento)(eqv? user (get_autor documento)))(get_documentos pDocs))))
+
 ; ES_ID?: Funcion que comprueba si es un id válido
 ; Dominio: x
 ; Recorrido: boolean

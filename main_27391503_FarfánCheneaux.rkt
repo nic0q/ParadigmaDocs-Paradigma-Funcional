@@ -117,8 +117,8 @@
 
 (define (revokeAllAccesses paradigmadocs)
   (if (logeado? paradigmadocs)                     
-      (if (empty? (filter (λ (documento)(eqv? (get_logeado paradigmadocs)(get_autor documento)))(get_documentos paradigmadocs)))
-          (deslogear paradigmadocs )
+      (if (tiene_documentos? paradigmadocs (get_logeado paradigmadocs))
+          (deslogear paradigmadocs)
           (deslogear(set_documento paradigmadocs(append(filter (λ (documento) (not(eqv? (get_logeado paradigmadocs) (get_autor documento)))) (get_documentos paradigmadocs)) 
                                                        (map eliminar_permisos (filter (λ (documento) (eqv? (get_logeado paradigmadocs) (get_autor documento))) (get_documentos paradigmadocs)))))))
       paradigmadocs))
@@ -267,7 +267,7 @@
 (define (comment paradigmadocs)
   (λ (idDoc date selectedText commenText)
    (if  (logeado? paradigmadocs)
-        (if (and(tiene_permiso? (get_logeado paradigmadocs)(get_editor_and_comment_users paradigmadocs idDoc))(es_id? idDoc)(date? date)(es_texto? selectedText)(es_texto? commenText))
+        (if (and(not(eqv? ""selectedText))(tiene_permiso? (get_logeado paradigmadocs)(get_editor_and_comment_users paradigmadocs idDoc))(es_id? idDoc)(date? date)(es_texto? selectedText)(es_texto? commenText))
             (if (string-contains? (get_texto_version(get_active_version_byid paradigmadocs idDoc)) ((decrypt paradigmadocs)selectedText)) ; Si encuentra texto
                 (deslogear (set_version paradigmadocs idDoc (version(set_id_vr paradigmadocs idDoc) date (string-replace (get_texto_version(get_active_version_byid paradigmadocs idDoc))((decrypt paradigmadocs)selectedText) ((decrypt paradigmadocs)(string-append selectedText "->%c["commenText "]c% "))))))
                 (deslogear paradigmadocs))
@@ -351,17 +351,17 @@
 (define gDocs004    ((login gDocs04 "user1" "pass1" add) 2 (date 21 10 2021) "Word2"))           ;user2 tiene permiso en escritura en doc3, añade texto
 (define gDocs0004   ((login gDocs004 "user1" "pass1" add)   2 (date 21 10 2021) "Añado en doc3"))   ;user1 tiene permiso de escritura en doc3
 (define gDocs00004  ((login gDocs0004 "user1" "pass1" add)  1 (date 21 10 2021) "No añado en doc2"));user1 NO tiene permiso de escritura en doc2, no añade texto
-(define gDocs000004 ((login gDocs00004 "user3" "pass3" add) 1 (date 21 10 2021) "No Añado doc2"))   ;user3 NO tiene permiso de escritura en doc2, solo lectura, no añade texto
+(define gDocs000004 ((login gDocs00004 "user1" "pass1" add) 1 (date 21 10 2021) "No Añado doc2"))   ;user1 NO tiene permiso de escritura en doc2, solo lectura, no añade texto
 ; RESTORE VERSION
-(define gDocs5    ((login gDocs000004    "user1" "pass1" restoreVersion) 0 1)) ;user1 creador de doc1, se restaura versión 1, se verifica mediante: (get_id_version(get_active_version_byid gDocs010 0)) -> 1
-(define gDocs05   ((login gDocs5  "user2" "pass2" restoreVersion) 1 1)) ;user2 creador de doc2, pero la version 1 no existe, no se restura:  (get_id_version(get_active_version_byid gDocs0ex10 1)) -> 0
-(define gDocs005  ((login gDocs05  "user1" "pass1" restoreVersion) 2 0)) ;user1 no es el creador de doc2, no se restaura versión:             (get_id_version(get_active_version_byid gDocs0010 2)) -> 1
-(define gDocs0005 ((login gDocs005 "user3" "pass3" restoreVersion) 2 0)) ;user3 es el creador de doc3, se restaura versión 0:                 (get_id_version(get_active_version_byid gDocs10 2)) -> 0
+(define gDocs5    ((login gDocs000004 "user1" "pass1" restoreVersion) 0 1)) ;user1 creador de doc1, se restaura versión 1, se verifica mediante: (get_id_version(get_active_version_byid gDocs5 0)) -> 1
+(define gDocs05   ((login gDocs5  "user2" "pass2" restoreVersion) 1 1)) ;user2 creador de doc2, pero la version 1 no existe, no se restura:  (get_id_version(get_active_version_byid gDocs05 1)) -> 0
+(define gDocs005  ((login gDocs05  "user1" "pass1" restoreVersion) 2 0)) ;user1 no es el creador de doc3, no se restaura versión:             (get_id_version(get_active_version_byid gDocs005 2)) -> 1
+(define gDocs0005 ((login gDocs005 "user3" "pass3" restoreVersion) 2 0)) ;user3 es el creador de doc3, se restaura versión 0:                 (get_id_version(get_active_version_byid gDocs0005 2)) -> 0
 ; REVOKE ALL ACCESSES
-(define gDocs6    (login gDocs0005   "user1" "pass1"   revokeAllAccesses)) ;user1 es propietario de doc4 y doc1, se eliminan todos los permisos para acceder a estos documentos
+(define gDocs6    (login gDocs0005 "user1" "pass1"  revokeAllAccesses)) ;user1 es propietario de doc4 y doc1, se eliminan todos los permisos para acceder a estos documentos
 (define gDocs06   (login gDocs6   "user2" "pass2"   revokeAllAccesses)) ;user2 es propietario de doc2, se eliminan todos los permisos para acceder a estos documentos
-(define gDocs006  (login gDocs06  "user7" "passxyz" revokeAllAccesses)) ;usuario no esta registrado
-(define gDocs0006 (login gDocs006 "user3" "pass3"   revokeAllAccesses)) ;user2 es propietario de doc3, se eliminan todos los permisos para acceder a estos documentos
+(define gDocs006  (login gDocs06  "userNotReg" "passxyz" revokeAllAccesses)) ;usuario no esta registrado
+(define gDocs0006 (login gDocs006 "user3" "pass3"   revokeAllAccesses)) ;user3 es propietario de doc2, se eliminan todos los permisos para acceder a estos documentos
 ; SEARCH
 ((login gDocs6 "user1" "pass1" search) "por")     ;encuentra "por" en: doc1 (creador), doc4(creador), doc3(le fue compartido)
 ((login gDocs6 "user2" "pass2" search) "Doc")     ;encuentra "Doc" em doc2 (creador), doc3(le fue compartido)
@@ -394,9 +394,9 @@
 (define gDocs010   ((login gDocs10 "user2" "pass2" comment ) 2 (date 22 10 2021)  "Documento" "comentarioooo")); En que caso se quiera comentar una version ya antes comentada, se comentara la ultima version sin comentar del documento
 (define gDoocs0010 ((login gDocs010"user2" "pass2" comment ) 1 (date 20 10 2021)  ""  "comentarioo"))          ; Se comenta un string vacio, no se hace ningún comentario
 ; ENCRYPT - DECRYPT
-(decryptDn (encryptDn "contraseña1234"))
-(decryptDn (encryptDn "laboratorio1"))
-(decryptDn (encryptDn "paradigma_funcional"))
+;(decryptDn (encryptDn "contraseña1234"))
+;(decryptDn (encryptDn "laboratorio1"))
+;(decryptDn (encryptDn "paradigma_funcional"))
 ; CTRLZ &  CTRLY
 (define gDocs011    ((login gDocs10 "user1" "pass1" ctrlZ)0 2))    ; En  este ejemplo se aplica  ctrlZ  1 vez sobre el documento id:0
 (define gDocs0011   ((login gDocs011 "user1" "pass1" ctrlZ)0 2))   ; Luego, se aplica  ctrlZ  nuevamente ctrlZ sobre el documento id:0, los ctrlZ se acumulan en la memoria Ahora 3

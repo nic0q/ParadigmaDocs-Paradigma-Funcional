@@ -134,7 +134,7 @@
   (if (and (not(member user (get_lista_logeados pDocs)))(tiene_cuenta? pDocs user pass))
       (aniadir_usuario_logeado pDocs user)
       pDocs))
-
+      
 ; DESLOGEAR: Retorna una version actualizada de paradigmadocs con el usuario deslogeado
 ; Dominio: paradigma_docs (lista)
 ; Recorrido: paradigma_docs (lista)
