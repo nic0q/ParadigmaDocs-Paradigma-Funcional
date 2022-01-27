@@ -8,11 +8,6 @@ El presente proyecto pertence a la asignatura de Paradigmas de la Programación 
 **Acerca de las funciones**
 La plataforma ParadigmaDocs es una plataforma de ofimática la cual permite añadir documentos, editar texto (añadir y eliminar) restaurar versiones de un documento, añadir estilos como **bold** **underlined** **italic**, tambien permite añadir comentarios a los documentos, realizar los comandos ControlZ y ControlY.
 
-**Lenguaje**
-Notas:
-    Código = 7
-    
-
 **Ejecución**
 Para la correcta ejecución el proyecto se compone de 7 archivos (exceptuando el Readme):
 
@@ -40,5 +35,10 @@ Los demás archivos están implícitos en **main** al comienzo, de la siguiente 
 ```
 
 **Nota:** Toda la documentación necesaria se encuentra dentro del cada TDA/main, cada función posee una descripción y en las últimas líneas de **main** se encuentran ejemplos de funcionamiento.
+
+**Calificacion Docente (Escala del 1 al 7)**
+
+Código: 7
+Informe: 6.6
 
 Made with <3 by Nícolas
