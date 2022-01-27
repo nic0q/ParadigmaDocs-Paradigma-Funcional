@@ -1,9 +1,17 @@
-# Nico Docs
+# Laboratio1 G.Docs
 
 #### Proyecto 1 Paradigmas de la Programación
 
 **Lenguaje**
-El presente proyecto está codificado en Scheme/Racket versión 8.2.
+El presente proyecto pertence a la asignatura de Paradigmas de la Programación impartido en la universidad de Santiago de Chile y está codificado en Scheme/Racket versión 8.2.
+
+**Acerca de las funciones**
+La plataforma ParadigmaDocs es una plataforma de ofimática la cual permite añadir documentos, editar texto (añadir y eliminar) restaurar versiones de un documento, añadir estilos como **bold** **underlined** **italic**, tambien permite añadir comentarios a los documentos, realizar los comandos ControlZ y ControlY.
+
+**Lenguaje**
+Notas:
+    Código = 7
+    
 
 **Ejecución**
 Para la correcta ejecución el proyecto se compone de 7 archivos (exceptuando el Readme):
@@ -32,3 +40,5 @@ Los demás archivos están implícitos en **main** al comienzo, de la siguiente 
 ```
 
 **Nota:** Toda la documentación necesaria se encuentra dentro del cada TDA/main, cada función posee una descripción y en las últimas líneas de **main** se encuentran ejemplos de funcionamiento.
+
+Made with <3 by Nícolas
